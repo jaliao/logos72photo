@@ -1,0 +1,34 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+
+context: |
+  Tech Stack: Next.js 16.1.1 (App Router), TypeScript, Prisma 7.2.0 (Multi-file Schema), Tailwind 4.0.0, Radix UI 1.0.0, Shadcn UI 1.0.0, Vercel, Firebase (Realtime Database & Firestore), Cloudflare R2.
+  語言：繁體中文，所有的產出物都要用繁體中文撰寫。
+
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+  tasks:
+    - Break tasks into chunks of max 2 hours
+
+    
