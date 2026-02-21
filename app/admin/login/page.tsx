@@ -6,6 +6,8 @@
  * ----------------------------------------------
  */
 
+export const runtime = 'edge'
+
 import { loginAction } from '@/app/admin/login/actions'
 
 interface Props {
