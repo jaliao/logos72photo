@@ -1,6 +1,6 @@
 /*
  * ----------------------------------------------
- * 15 分鐘子相簿列表頁（依 8 小時時段）
+ * 1 小時子相簿列表頁（依 8 小時時段）
  * 2026-02-21
  * app/gallery/[date]/[slot]/page.tsx
  * ----------------------------------------------
@@ -11,37 +11,35 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import { collection, query, where, getDocs } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m } from '@/lib/types'
 
 interface Params {
   params: Promise<{ date: string; slot: string }>
 }
 
-// 產生該大時段內所有 15 分鐘子相簿（共 32 個）
+// 產生該大時段內所有 1 小時子相簿（共 8 個）
 function generateSubAlbums(slot8h: number): number[] {
   const albums: number[] = []
   const startMin = slot8h * 60
   const endMin = startMin + 8 * 60
-  for (let m = startMin; m < endMin; m += 15) {
+  for (let m = startMin; m < endMin; m += 60) {
     albums.push(m)
   }
   return albums
 }
 
-// 查詢各子相簿是否有照片
+// 查詢各 1 小時子相簿是否有照片
 async function getAlbumsWithPhotos(date: string, slot8h: number): Promise<Set<number>> {
-  const q = query(
-    collection(db, 'photos'),
-    where('date', '==', date),
-    where('slot_8h', '==', slot8h),
-  )
-  const snap = await getDocs(q)
+  const photos = await queryPhotos([
+    { field: 'date', value: date },
+    { field: 'slot_8h', value: slot8h },
+  ])
   const withPhotos = new Set<number>()
-  snap.forEach((doc) => {
-    const data = doc.data()
-    withPhotos.add(data.slot_15m as number)
+  photos.forEach((photo) => {
+    // 計算該張照片所屬小時的起始分鐘
+    const hourMin = Math.floor(photo.slot_15m / 60) * 60
+    withPhotos.add(hourMin)
   })
   return withPhotos
 }
@@ -67,7 +65,7 @@ export default async function SlotPage({ params }: Params) {
         </h1>
         <p className="mb-6 text-sm text-zinc-500">{slotLabel}</p>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {albums.map((albumMin) => {
             const hasPhotos = withPhotos.has(albumMin)
             return (

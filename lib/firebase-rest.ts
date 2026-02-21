@@ -10,6 +10,8 @@
  * 不依賴任何 Node.js 原生模組，可在 Cloudflare Workers Edge Runtime 執行。
  */
 
+import type { PhotoDoc } from './types'
+
 /** 模組層級 access token 快取（每個 Worker instance 內有效） */
 let cachedToken: { value: string; expiresAt: number } | null = null
 
@@ -272,6 +274,67 @@ function parseFirestoreValue(value: Record<string, unknown>): unknown {
     return parseFirestoreFields((map.fields ?? {}) as Record<string, unknown>)
   }
   return null
+}
+
+// ─── Firestore 結構化查詢 ───────────────────────────────────────────────────
+
+/** 將 filters 陣列轉換為 Firestore StructuredQuery 格式 */
+function buildStructuredQuery(
+  collectionId: string,
+  filters: Array<{ field: string; value: unknown }>,
+): Record<string, unknown> {
+  const fieldFilters = filters.map(({ field, value }) => ({
+    fieldFilter: {
+      field: { fieldPath: field },
+      op: 'EQUAL',
+      value: toFirestoreValue(value),
+    },
+  }))
+
+  return {
+    structuredQuery: {
+      from: [{ collectionId }],
+      where:
+        fieldFilters.length === 1
+          ? fieldFilters[0]
+          : { compositeFilter: { op: 'AND', filters: fieldFilters } },
+    },
+  }
+}
+
+/**
+ * Firestore REST：以多條件 EQUAL 查詢集合文件
+ * @param collectionId 集合名稱，例如 "photos"
+ * @param filters      欄位過濾條件陣列（AND 組合）
+ * @returns 文件陣列（已解析為 PhotoDoc）
+ */
+export async function queryPhotos(
+  filters: Array<{ field: string; value: unknown }>,
+): Promise<PhotoDoc[]> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+  const body = buildStructuredQuery('photos', filters)
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore queryPhotos 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const rows = (await res.json()) as Array<{ document?: { fields: Record<string, unknown> } }>
+  return rows
+    .filter((r) => r.document)
+    .map((r) => parseFirestoreFields(r.document!.fields) as unknown as PhotoDoc)
 }
 
 // ─── RTDB REST ─────────────────────────────────────────────────────────────

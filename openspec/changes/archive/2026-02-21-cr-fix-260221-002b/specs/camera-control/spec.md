@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: 同步拍照觸發
 系統必須利用 Firebase Realtime Database 實現指令同步，每 5 分鐘由伺服器更新時間戳記，觸發所有連接的 iPhone 進行拍照。觸發條件以「RTDB 值遞增」為準，而非比對本地時脈差值，以避免時脈偏差導致遺漏觸發。RTDB 監聽器 SHALL 僅在頁面載入時掛載一次，不隨相機狀態（idle/shooting/uploading）重建。**相機功能（含 RTDB 監聽）SHALL 在頁面載入後立即啟動，不受 PWA standalone 模式限制**，確保在正式環境（Cloudflare Pages）中可正常運作。伺服器端寫入 `trigger/last_shot` 節點時，`rtdbSet` SHALL 以匿名方式（不附帶 Authorization header）呼叫 RTDB REST API，利用節點的 `.write: true` 公開規則完成寫入；安全性由上游 `/api/trigger` 的 `x-trigger-secret` header 驗證保障。
@@ -22,18 +22,3 @@
 #### Scenario: rtdbSet 不使用 OAuth2 token
 - **WHEN** `rtdbSet` 被呼叫
 - **THEN** 請求 SHALL NOT 包含 `Authorization: Bearer` header 或 `?access_token=` query string，避免 Firebase 以 OAuth2 身分套用 Security Rules 造成 401
-
-#### Scenario: Safari 直接開啟相機頁面可正常拍照
-- **WHEN** 用戶在 Safari 瀏覽器（非 standalone 模式）開啟 `/camera1` 或 `/camera2`
-- **THEN** 頁面 SHALL 正常啟動相機串流與 RTDB 監聽，收到觸發後執行拍照
-
-### Requirement: 相機頁面顯示 RTDB 觸發時間戳記
-相機頁面狀態列 SHALL 顯示最後一次從 Firebase RTDB 收到的 `trigger/last_shot` 原始時間（格式 HH:MM:SS），供現場人員判斷觸發信號是否正常抵達。
-
-#### Scenario: 正常接收觸發後顯示時間
-- **WHEN** RTDB `trigger/last_shot` 更新，iPhone 相機頁面收到通知
-- **THEN** 狀態列中「RTDB 觸發：」欄位 SHALL 立即更新為該觸發的本地時間（HH:MM:SS 格式）
-
-#### Scenario: 尚未收到任何觸發時顯示預設值
-- **WHEN** 頁面載入後尚未收到任何 RTDB 觸發
-- **THEN** 狀態列「RTDB 觸發：」欄位 SHALL 顯示「—」

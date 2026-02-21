@@ -1,6 +1,6 @@
 /*
  * ----------------------------------------------
- * 15 分鐘相簿照片預覽與下載頁
+ * 1 小時相簿照片預覽與下載頁
  * 2026-02-21
  * app/gallery/[date]/[slot]/[album]/page.tsx
  * ----------------------------------------------
@@ -12,31 +12,31 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m, type PhotoDoc } from '@/lib/types'
 
 interface Params {
   params: Promise<{ date: string; slot: string; album: string }>
 }
 
-async function getPhotos(date: string, slot8h: number, slot15m: number): Promise<PhotoDoc[]> {
-  const q = query(
-    collection(db, 'photos'),
-    where('date', '==', date),
-    where('slot_8h', '==', slot8h),
-    where('slot_15m', '==', slot15m),
-    orderBy('timestamp', 'asc'),
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => d.data() as PhotoDoc)
+async function getPhotos(date: string, slot8h: number, hourMin: number): Promise<PhotoDoc[]> {
+  const photos = await queryPhotos([
+    { field: 'date', value: date },
+    { field: 'slot_8h', value: slot8h },
+  ])
+  // 過濾出該 1 小時範圍內的照片，依時間升冪排序
+  return photos
+    .filter((p) => p.slot_15m >= hourMin && p.slot_15m < hourMin + 60)
+    .sort((a, b) => a.timestamp - b.timestamp)
 }
 
 export default async function AlbumPage({ params }: Params) {
   const { date, slot, album } = await params
   const slot8h = parseInt(slot, 10)
-  const slot15m = parseInt(album, 10)
-  const photos = await getPhotos(date, slot8h, slot15m)
+  const hourMin = parseInt(album, 10)
+  const photos = await getPhotos(date, slot8h, hourMin)
+
+  const hourLabel = `${formatSlot15m(hourMin)} – ${formatSlot15m(hourMin + 60)}`
 
   return (
     <main className="min-h-screen bg-zinc-50 p-6">
@@ -49,7 +49,7 @@ export default async function AlbumPage({ params }: Params) {
         </Link>
 
         <h1 className="mb-1 mt-4 text-xl font-bold text-zinc-800">
-          {date} · {formatSlot15m(slot15m)}
+          {date} · {hourLabel}
         </h1>
         <p className="mb-6 text-sm text-zinc-500">{photos.length} 張照片</p>
 

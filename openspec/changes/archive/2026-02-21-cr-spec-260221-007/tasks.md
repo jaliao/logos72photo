@@ -18,8 +18,8 @@
 
 ## 4. 部署與驗證
 
-- [ ] 4.1 部署新 build 至 Cloudflare Pages（`git push origin main`）
-- [ ] 4.2 iPhone 1：Safari 開啟 `https://logos72photo.pages.dev/camera1` → 確認顯示安裝引導 → 加入主畫面為「接力相機 1」
-- [ ] 4.3 iPhone 2：Safari 開啟 `https://logos72photo.pages.dev/camera2` → 確認顯示安裝引導 → 加入主畫面為「接力相機 2」
-- [ ] 4.4 兩台 iPhone 從主畫面圖示開啟 → 確認各自進入相機模式，狀態列顯示 `iphone-1` / `iphone-2`
-- [ ] 4.5 開啟監控儀表板 `https://logos72photo.pages.dev/admin/monitoring` → 確認同時顯示 `iphone-1` 與 `iphone-2` 兩張裝置卡片，均為「連線中」
+- [x] 4.1 部署新 build 至 Cloudflare Pages（`git push origin main`）
+- [x] 4.2 iPhone 1：Safari 開啟 `https://logos72photo.pages.dev/camera1` → 確認顯示安裝引導 → 加入主畫面為「接力相機 1」
+- [x] 4.3 iPhone 2：Safari 開啟 `https://logos72photo.pages.dev/camera2` → 確認顯示安裝引導 → 加入主畫面為「接力相機 2」
+- [x] 4.4 兩台 iPhone 從主畫面圖示開啟 → 確認各自進入相機模式，狀態列顯示 `iphone-1` / `iphone-2`
+- [x] 4.5 開啟監控儀表板 `https://logos72photo.pages.dev/admin/monitoring` → 確認同時顯示 `iphone-1` 與 `iphone-2` 兩張裝置卡片，均為「連線中」
