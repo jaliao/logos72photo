@@ -137,7 +137,7 @@ NEXT_PUBLIC_DEVICE_ID=iphone-test
     "trigger": {
       "last_shot": {
         ".read": true,
-        ".write": false
+        ".write": true
       }
     }
   }
@@ -149,10 +149,10 @@ NEXT_PUBLIC_DEVICE_ID=iphone-test
 **規則說明：**
 | 節點 | 讀 | 寫 |
 |------|----|----|
-| `trigger/last_shot` | ✅ 公開（iPhone 相機頁面讀取） | ❌ 僅 Server（Admin SDK 繞過規則） |
+| `trigger/last_shot` | ✅ 公開（iPhone 相機頁面讀取） | ✅ 公開（Server REST API 寫入） |
 | 其他所有節點 | ❌ 禁止 | ❌ 禁止 |
 
-> 💡 Server 端（`/api/trigger`）使用 Service Account OAuth2 token 寫入，Firebase Admin 權限可繞過安全規則，不受 `".write": false` 限制。
+> ⚠️ **注意：** 本專案 Server 端（`/api/trigger`）使用 Firebase REST API 搭配 Service Account OAuth2 token 寫入 RTDB。Firebase REST API **不會繞過安全規則**（與 Admin SDK 行為不同），因此 `trigger/last_shot` 的 `.write` 必須設為 `true`。安全性由 `/api/trigger` 的 `x-trigger-secret` 驗證保障——沒有正確 secret 就無法呼叫觸發 API。
 
 ---
 
