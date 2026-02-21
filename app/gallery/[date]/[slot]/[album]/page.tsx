@@ -6,6 +6,7 @@
  * ----------------------------------------------
  */
 
+export const runtime = 'edge'
 // 禁止靜態渲染，確保 Firebase 在 runtime 執行
 export const dynamic = 'force-dynamic'
 

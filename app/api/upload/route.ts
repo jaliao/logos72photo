@@ -1,14 +1,16 @@
 /*
  * ----------------------------------------------
  * API Route：照片上傳至 Cloudflare R2
- * 2026-02-21
+ * 2026-02-21 (Updated: 2026-02-21)
  * app/api/upload/route.ts
  * ----------------------------------------------
  */
 
+export const runtime = 'edge'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToR2 } from '@/lib/r2'
-import { getAdminDb } from '@/lib/firebase-admin'
+import { addDoc } from '@/lib/firebase-rest'
 import { getSlot8h, getSlot15m, type PhotoDoc } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
@@ -28,13 +30,12 @@ export async function POST(req: NextRequest) {
     const dateStr = now.toISOString().slice(0, 10)
     const key = `${dateStr}/${deviceId}_${timestamp}.jpg`
 
-    // 上傳至 R2
+    // 上傳至 R2（使用 Uint8Array，相容 Edge Runtime）
     const arrayBuffer = await photo.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    const r2Url = await uploadToR2(key, buffer)
+    const body = new Uint8Array(arrayBuffer)
+    const r2Url = await uploadToR2(key, body)
 
-    // Admin SDK 寫入 Firestore photos 集合（繞過 Security Rules）
-    const adminDb = getAdminDb()
+    // 寫入 Firestore photos 集合（透過 REST API）
     const photoDoc: PhotoDoc = {
       r2_url: r2Url,
       timestamp,
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       slot_8h: getSlot8h(now),
       slot_15m: getSlot15m(now),
     }
-    await adminDb.collection('photos').add(photoDoc)
+    await addDoc('photos', photoDoc as unknown as Record<string, unknown>)
 
     return NextResponse.json({ ok: true, url: r2Url })
   } catch (err) {

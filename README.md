@@ -15,8 +15,9 @@
    - [相機頁面（iPhone PWA）](#相機頁面iphone-pwa)
    - [觸發 API](#觸發-api)
    - [監控儀表板](#監控儀表板)
-6. [外部服務未就緒時的測試方式](#外部服務未就緒時的測試方式)
-7. [常見錯誤排查](#常見錯誤排查)
+6. [部署至 Cloudflare Pages](#部署至-cloudflare-pages)
+7. [外部服務未就緒時的測試方式](#外部服務未就緒時的測試方式)
+8. [常見錯誤排查](#常見錯誤排查)
 
 ---
 
@@ -313,6 +314,60 @@ curl -X POST http://localhost:3000/api/upload \
 
 ---
 
+## 部署至 Cloudflare Pages
+
+本專案透過 **GitHub 整合**實現 push-to-deploy：每次 `git push main` 時 Cloudflare Pages 自動觸發 build 與 deploy。
+
+### 首次設定
+
+1. **建立 Pages project**
+   - Cloudflare Dashboard → **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**
+   - 選擇此 GitHub repository
+
+2. **設定 Build configuration**
+
+   | 欄位 | 值 |
+   |------|-----|
+   | Framework preset | `None`（手動設定） |
+   | Build command | `npm run pages:build` |
+   | Build output directory | `.vercel/output/static` |
+   | Root directory | `/` |
+
+3. **設定環境變數**
+   - Pages project → **Settings** → **Environment variables** → **Production**
+   - 依 `.dev.vars.example` 加入所有 key/value（以 Encrypted 儲存 secrets）
+
+4. **完成首次部署**
+   ```bash
+   git push origin main
+   ```
+   推送後 Cloudflare Dashboard 將自動開始 build，約 1–2 分鐘完成。
+
+### 日常部署
+
+```bash
+git push origin main   # 自動觸發 Cloudflare Pages build + deploy
+```
+
+### 本機 Cloudflare 環境測試（選做）
+
+```bash
+cp .dev.vars.example .dev.vars   # 填入真實值
+npm run pages:build              # 建置 Cloudflare 產出
+npm run pages:dev                # 本機以 wrangler 模擬 Pages 環境
+```
+
+### 手動部署（不透過 GitHub）
+
+```bash
+npm run pages:build
+npm run pages:deploy
+```
+
+> ⚠️ 需先以 `wrangler login` 完成 Cloudflare 認證。
+
+---
+
 ## 外部服務未就緒時的測試方式
 
 若 Firebase 或 R2 尚未建立，仍可測試 **UI 佈局與頁面路由**：
@@ -386,7 +441,20 @@ npm run lint
 # 生產環境建置
 npm run build
 
-# 測試觸發 API（需先啟動 dev server）
+# Cloudflare Pages 建置（next-on-pages）
+npm run pages:build
+
+# 本機 Cloudflare Pages 環境（wrangler）
+npm run pages:dev
+
+# 手動部署至 Cloudflare Pages
+npm run pages:deploy
+
+# 測試觸發 API（本機 dev server）
 curl -X POST http://localhost:3000/api/trigger \
   -H "x-trigger-secret: $(grep TRIGGER_API_SECRET .env.local | cut -d= -f2)"
+
+# 測試觸發 API（wrangler pages dev）
+curl -X POST http://localhost:8788/api/trigger \
+  -H "x-trigger-secret: $(grep TRIGGER_API_SECRET .dev.vars | cut -d= -f2)"
 ```

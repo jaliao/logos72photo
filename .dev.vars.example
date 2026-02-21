@@ -1,0 +1,32 @@
+# Cloudflare Pages 本機開發環境變數範本
+# 複製為 .dev.vars 並填入實際值，搭配 `npm run pages:dev` 使用
+# 注意：.dev.vars 不應提交至版本控制（已加入 .gitignore）
+
+# ── Firebase 客戶端設定（公開，前綴 NEXT_PUBLIC_） ─────────────────────────
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=
+
+# ── Firebase Admin SDK（Service Account，機密） ────────────────────────────
+FIREBASE_ADMIN_PROJECT_ID=
+FIREBASE_ADMIN_CLIENT_EMAIL=
+# 私鑰：PEM 格式，換行符以 \n 表示，整個值用雙引號包住
+# 範例：FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+FIREBASE_ADMIN_PRIVATE_KEY=
+
+# ── Cloudflare R2 設定 ────────────────────────────────────────────────────
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_URL=
+
+# ── 觸發安全金鑰 ──────────────────────────────────────────────────────────
+TRIGGER_API_SECRET=
+
+# ── 裝置 ID（測試用） ─────────────────────────────────────────────────────
+NEXT_PUBLIC_DEVICE_ID=iphone-test

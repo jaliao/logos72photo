@@ -19,11 +19,11 @@ export const r2 = new S3Client({
 })
 
 /**
- * 上傳 Buffer 至 R2
- * @param key 儲存路徑，例如 "2026-02-21/iphone-1_1708481234567.jpg"
- * @param body 圖片 Buffer
+ * 上傳圖片至 R2
+ * @param key  儲存路徑，例如 "2026-02-21/iphone-1_1708481234567.jpg"
+ * @param body 圖片二進位資料（Uint8Array，Edge Runtime 相容）
  */
-export async function uploadToR2(key: string, body: Buffer): Promise<string> {
+export async function uploadToR2(key: string, body: Uint8Array): Promise<string> {
   await r2.send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
