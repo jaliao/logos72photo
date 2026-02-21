@@ -8,18 +8,20 @@
 
 1. [前置需求](#前置需求)
 2. [環境變數設定](#環境變數設定)
-3. [啟動開發伺服器](#啟動開發伺服器)
-4. [開發工具腳本](#開發工具腳本)
-5. [功能測試指南](#功能測試指南)
+3. [Firebase RTDB 設定](#firebase-rtdb-設定)
+4. [Cloudflare Worker Cron 部署](#cloudflare-worker-cron-部署)
+5. [啟動開發伺服器](#啟動開發伺服器)
+6. [開發工具腳本](#開發工具腳本)
+7. [功能測試指南](#功能測試指南)
    - [首頁（照片瀏覽入口）](#首頁照片瀏覽入口)
    - [相機頁面（iPhone PWA）](#相機頁面iphone-pwa)
    - [觸發 API](#觸發-api)
    - [監控儀表板](#監控儀表板)
-6. [iPhone 開機步驟](#iphone-開機步驟)
-7. [觸發鏈路除錯指南](#觸發鏈路除錯指南)
-8. [部署至 Cloudflare Pages](#部署至-cloudflare-pages)
-9. [外部服務未就緒時的測試方式](#外部服務未就緒時的測試方式)
-10. [常見錯誤排查](#常見錯誤排查)
+8. [iPhone 開機步驟](#iphone-開機步驟)
+9. [觸發鏈路除錯指南](#觸發鏈路除錯指南)
+10. [部署至 Cloudflare Pages](#部署至-cloudflare-pages)
+11. [外部服務未就緒時的測試方式](#外部服務未就緒時的測試方式)
+12. [常見錯誤排查](#常見錯誤排查)
 
 ---
 
@@ -100,6 +102,146 @@ TRIGGER_API_SECRET=your_random_secret_here
 ```env
 NEXT_PUBLIC_DEVICE_ID=iphone-test
 ```
+
+---
+
+## Firebase RTDB 設定
+
+自動拍照觸發機制依賴 Firebase **Realtime Database（RTDB）**。相機頁面透過 Firebase Client SDK 監聽 `trigger/last_shot` 節點，伺服器每 5 分鐘更新此節點，iPhone 收到更新即觸發拍照。
+
+> ⚠️ **最常見的不拍照原因**：RTDB 安全規則預設鎖定，客戶端讀不到觸發值。請務必完成以下設定。
+
+---
+
+### 步驟 1：啟用 Realtime Database
+
+1. 前往 [Firebase Console](https://console.firebase.google.com/) → 選擇你的專案
+2. 左側選單 → **建構** → **Realtime Database**
+3. 點擊「**建立資料庫**」
+4. 選擇位置：**asia-southeast1（新加坡）**
+5. 安全規則模式：選「**以鎖定模式啟動**」（之後手動設定）
+6. 建立完成後，複製資料庫 URL（格式如：`https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app`）
+
+---
+
+### 步驟 2：設定安全規則（必要）
+
+1. Firebase Console → **Realtime Database** → 上方分頁「**規則**」
+2. 將規則**完整替換**為以下內容：
+
+```json
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "trigger": {
+      "last_shot": {
+        ".read": true,
+        ".write": false
+      }
+    }
+  }
+}
+```
+
+3. 點擊「**發布**」
+
+**規則說明：**
+| 節點 | 讀 | 寫 |
+|------|----|----|
+| `trigger/last_shot` | ✅ 公開（iPhone 相機頁面讀取） | ❌ 僅 Server（Admin SDK 繞過規則） |
+| 其他所有節點 | ❌ 禁止 | ❌ 禁止 |
+
+> 💡 Server 端（`/api/trigger`）使用 Service Account OAuth2 token 寫入，Firebase Admin 權限可繞過安全規則，不受 `".write": false` 限制。
+
+---
+
+### 步驟 3：確認環境變數
+
+在 Cloudflare Pages 環境變數（以及本機 `.env.local`）確認以下設定：
+
+```env
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app
+```
+
+> ⚠️ URL 結尾**不能有斜線**，且必須與 Firebase Console 顯示的 URL 完全一致。
+
+---
+
+### 步驟 4：驗證 RTDB 連線
+
+手動觸發一次，觀察 RTDB 是否有更新：
+
+```bash
+# 觸發正式環境（填入你的 TRIGGER_API_SECRET）
+curl -X POST https://logos72photo.pages.dev/api/trigger \
+  -H "x-trigger-secret: YOUR_SECRET"
+```
+
+**預期回應：**
+```json
+{ "ok": true, "triggered_at": 1708481234567 }
+```
+
+觸發後至 Firebase Console → Realtime Database → **資料** 分頁，確認 `trigger/last_shot` 節點有更新為最新時間戳記。
+
+如果 iPhone 相機頁面狀態列的「RTDB 觸發：」欄位有更新時間，表示 RTDB 設定正確。
+
+---
+
+## Cloudflare Worker Cron 部署
+
+Cron Worker 負責每 5 分鐘自動呼叫 `/api/trigger`，是自動拍照的驅動引擎。**未部署 Worker 則必須手動觸發。**
+
+---
+
+### 步驟 1：安裝 Wrangler 並登入
+
+```bash
+npm install -g wrangler
+wrangler login
+```
+
+### 步驟 2：設定 Secret（安全金鑰）
+
+```bash
+wrangler secret put TRIGGER_API_SECRET
+# 輸入與 Cloudflare Pages 環境變數相同的 TRIGGER_API_SECRET 值
+```
+
+### 步驟 3：確認 `wrangler.toml` 設定
+
+```toml
+name = "logos72photo-cron"
+main = "workers/cron-trigger.ts"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["*/5 * * * *"]   # 每 5 分鐘
+
+[vars]
+TRIGGER_API_URL = "https://logos72photo.pages.dev/api/trigger"
+```
+
+### 步驟 4：部署 Worker
+
+```bash
+wrangler deploy workers/cron-trigger.ts
+```
+
+**成功輸出範例：**
+```
+✅ Successfully published your Worker to https://logos72photo-cron.your-account.workers.dev
+```
+
+### 步驟 5：確認 Cron 正常執行
+
+1. 前往 [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → `logos72photo-cron`
+2. 點擊「**Logs**」→「**Begin log stream**」
+3. 等待下一個 5 分鐘整點（xx:00, xx:05, xx:10...）
+4. 確認 log 出現：`拍照觸發成功：2026-02-21T...`
+
+> 如果 log 顯示錯誤 `401`，表示 `TRIGGER_API_SECRET` 與 Pages 環境變數不一致，重新執行 `wrangler secret put TRIGGER_API_SECRET`。
 
 ---
 
