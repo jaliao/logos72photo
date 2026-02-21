@@ -19,22 +19,34 @@ interface Params {
   params: Promise<{ date: string; slot: string; album: string }>
 }
 
-async function getPhotos(date: string, slot8h: number, hourMin: number): Promise<PhotoDoc[]> {
-  const photos = await queryPhotos([
-    { field: 'date', value: date },
-    { field: 'slot_8h', value: slot8h },
-  ])
-  // 過濾出該 1 小時範圍內的照片，依時間升冪排序
-  return photos
-    .filter((p) => p.slot_15m >= hourMin && p.slot_15m < hourMin + 60)
-    .sort((a, b) => a.timestamp - b.timestamp)
+async function getPhotos(
+  date: string,
+  slot8h: number,
+  hourMin: number,
+): Promise<{ photos: PhotoDoc[]; error?: string }> {
+  try {
+    const all = await queryPhotos([
+      { field: 'date', value: date },
+      { field: 'slot_8h', value: slot8h },
+    ])
+    // 過濾出該 1 小時範圍內的照片，依時間升冪排序
+    return {
+      photos: all
+        .filter((p) => p.slot_15m >= hourMin && p.slot_15m < hourMin + 60)
+        .sort((a, b) => a.timestamp - b.timestamp),
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[AlbumPage] queryPhotos 失敗：', msg)
+    return { photos: [], error: msg }
+  }
 }
 
 export default async function AlbumPage({ params }: Params) {
   const { date, slot, album } = await params
   const slot8h = parseInt(slot, 10)
   const hourMin = parseInt(album, 10)
-  const photos = await getPhotos(date, slot8h, hourMin)
+  const { photos, error } = await getPhotos(date, slot8h, hourMin)
 
   const hourLabel = `${formatSlot15m(hourMin)} – ${formatSlot15m(hourMin + 60)}`
 
@@ -53,7 +65,13 @@ export default async function AlbumPage({ params }: Params) {
         </h1>
         <p className="mb-6 text-sm text-zinc-500">{photos.length} 張照片</p>
 
-        {photos.length === 0 ? (
+        {error && (
+          <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            查詢失敗：{error}
+          </p>
+        )}
+
+        {photos.length === 0 && !error ? (
           <p className="text-center text-zinc-400">此時段尚無照片</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

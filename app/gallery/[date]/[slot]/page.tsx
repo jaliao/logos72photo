@@ -30,25 +30,34 @@ function generateSubAlbums(slot8h: number): number[] {
 }
 
 // 查詢各 1 小時子相簿是否有照片
-async function getAlbumsWithPhotos(date: string, slot8h: number): Promise<Set<number>> {
-  const photos = await queryPhotos([
-    { field: 'date', value: date },
-    { field: 'slot_8h', value: slot8h },
-  ])
-  const withPhotos = new Set<number>()
-  photos.forEach((photo) => {
-    // 計算該張照片所屬小時的起始分鐘
-    const hourMin = Math.floor(photo.slot_15m / 60) * 60
-    withPhotos.add(hourMin)
-  })
-  return withPhotos
+async function getAlbumsWithPhotos(
+  date: string,
+  slot8h: number,
+): Promise<{ albums: Set<number>; error?: string }> {
+  try {
+    const photos = await queryPhotos([
+      { field: 'date', value: date },
+      { field: 'slot_8h', value: slot8h },
+    ])
+    const withPhotos = new Set<number>()
+    photos.forEach((photo) => {
+      // 計算該張照片所屬小時的起始分鐘
+      const hourMin = Math.floor(photo.slot_15m / 60) * 60
+      withPhotos.add(hourMin)
+    })
+    return { albums: withPhotos }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[SlotPage] queryPhotos 失敗：', msg)
+    return { albums: new Set(), error: msg }
+  }
 }
 
 export default async function SlotPage({ params }: Params) {
   const { date, slot } = await params
   const slot8h = parseInt(slot, 10) as 0 | 8 | 16
   const albums = generateSubAlbums(slot8h)
-  const withPhotos = await getAlbumsWithPhotos(date, slot8h)
+  const { albums: withPhotos, error } = await getAlbumsWithPhotos(date, slot8h)
 
   const slotLabel =
     slot8h === 0 ? '00:00 – 08:00' : slot8h === 8 ? '08:00 – 16:00' : '16:00 – 24:00'
@@ -64,6 +73,12 @@ export default async function SlotPage({ params }: Params) {
           {date}
         </h1>
         <p className="mb-6 text-sm text-zinc-500">{slotLabel}</p>
+
+        {error && (
+          <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            查詢失敗：{error}
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {albums.map((albumMin) => {
