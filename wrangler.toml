@@ -1,0 +1,13 @@
+# Cloudflare Workers / Pages 配置
+# 2026-02-21
+
+name = "logos72photo-cron"
+main = "workers/cron-trigger.ts"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+TRIGGER_API_URL = "https://logos72photo.pages.dev/api/trigger"  # 改成你的實際網域
+# TRIGGER_API_SECRET 透過 wrangler secret put TRIGGER_API_SECRET 設定

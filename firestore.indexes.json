@@ -1,0 +1,23 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "photos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "date",      "order": "ASCENDING" },
+        { "fieldPath": "slot_8h",   "order": "ASCENDING" },
+        { "fieldPath": "slot_15m",  "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "photos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "date",    "order": "ASCENDING" },
+        { "fieldPath": "slot_8h", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
