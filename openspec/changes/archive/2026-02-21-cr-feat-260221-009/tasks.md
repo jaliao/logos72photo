@@ -31,12 +31,12 @@
 ## 5. Firestore Security Rules
 
 - [x] 5.1 【確認】Firestore Rules 已有 `devices` 集合 `allow read: if true`，無需變更
-- [ ] 5.2 【手動】部署 Rules 後，確認 client-side `onSnapshot` 可正常取得 `devices` 資料（無 permission-denied 錯誤）
+- [x] 5.2 【手動】部署 Rules 後，確認 client-side `onSnapshot` 可正常取得 `devices` 資料（無 permission-denied 錯誤）
 
 ## 6. 整合驗證
 
-- [ ] 6.1 【手動】開啟相機頁與監控儀表板各一視窗，確認心跳到達後儀表板在 1 秒內自動更新電量與連線狀態
-- [ ] 6.2 【手動】拍照後確認儀表板縮圖在 1 秒內自動刷新
-- [ ] 6.3 【手動】停止相機心跳 45 秒，確認儀表板顯示紅色「失聯」Badge
-- [ ] 6.4 【手動】重新恢復心跳，確認 Badge 消失並恢復「連線中」
+- [x] 6.1 【手動】開啟相機頁與監控儀表板各一視窗，確認心跳到達後儀表板在 1 秒內自動更新電量與連線狀態
+- [x] 6.2 【手動】拍照後確認儀表板縮圖在 1 秒內自動刷新
+- [x] 6.3 【手動】停止相機心跳 30 秒，確認儀表板顯示紅色「失聯」Badge
+- [x] 6.4 【手動】重新恢復心跳，確認 Badge 消失並恢復「連線中」
 - [ ] 6.5 【跳過】更新 `README-AI.md`（`.ai-rules.md` 不存在，略過）
