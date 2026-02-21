@@ -10,4 +10,4 @@
 export const HEARTBEAT_INTERVAL_MS = 15_000
 
 /** 裝置離線判定閾值（毫秒）。超過此時間未收到心跳視為失聯。 */
-export const OFFLINE_THRESHOLD_MS = HEARTBEAT_INTERVAL_MS * 3 // 45 秒
+export const OFFLINE_THRESHOLD_MS = HEARTBEAT_INTERVAL_MS * 2 // 30 秒
