@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { ref, onValue } from 'firebase/database'
 import { getRtdb } from '@/lib/firebase-rtdb'
+import { HEARTBEAT_INTERVAL_MS } from '@/lib/constants'
 
 // 格式化最後連線時間
 function formatTime(ts: number | null): string {
@@ -198,7 +199,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     return () => unsubscribe()
   }, [isStandalone])
 
-  // 7.1 心跳：每 30 秒透過 API 寫入 Firestore（Admin SDK，繞過 rules）
+  // 7.1 心跳：每 HEARTBEAT_INTERVAL_MS 透過 API 寫入 Firestore（Admin SDK，繞過 rules）
   useEffect(() => {
     if (!isStandalone) return
     const sendHeartbeat = async () => {
@@ -221,7 +222,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     }
 
     sendHeartbeat()
-    const id = setInterval(sendHeartbeat, 30_000)
+    const id = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
     return () => clearInterval(id)
   }, [deviceId, isStandalone])
 
