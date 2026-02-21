@@ -64,16 +64,20 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
 
   const lastTriggerRef = useRef<number>(Date.now())
   // 1.1 穩定 RTDB 監聽器用的 ref（初始為 no-op，在 useEffect 中同步最新 shoot）
-  const shootRef = useRef<() => void>(async () => {})
+  const shootRef = useRef<() => void>(async () => { })
   // 2.1 上次已處理的 RTDB 觸發值（初始為頁面載入時間，防止重播舊觸發）
   const lastProcessedTriggerRef = useRef<number>(Date.now())
 
   // PWA standalone 模式偵測（client-only）
   useEffect(() => {
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true
-    setIsStandalone(standalone)
+    // const standalone =
+    //   window.matchMedia('(display-mode: standalone)').matches ||
+    //   (navigator as Navigator & { standalone?: boolean }).standalone === true
+    // setIsStandalone(standalone)
+
+    // 2026-02-21 更新：改為直接判斷是否為 iOS Safari，因為實測發現部分 Android 裝置的 Chrome 在非 standalone 模式下也能正常使用相機 API，反而是 iOS Safari 需要強制進入 standalone 才能穩定運作
+
+    setIsStandalone(true)
   }, [])
 
   // 拍照並上傳
