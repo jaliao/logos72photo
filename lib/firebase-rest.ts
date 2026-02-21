@@ -283,9 +283,10 @@ function parseFirestoreValue(value: Record<string, unknown>): unknown {
  */
 export async function rtdbSet(path: string, value: unknown): Promise<void> {
   const dbUrl = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL?.replace(/\/$/, '')
-  const token = await getAccessToken()
 
-  const res = await fetch(`${dbUrl}/${path}.json?access_token=${token}`, {
+  // trigger/last_shot 為公開寫入節點（RTDB 規則 .write: true），不需要 access token
+  // 安全性由 /api/trigger 的 x-trigger-secret 驗證保障
+  const res = await fetch(`${dbUrl}/${path}.json`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(value),
