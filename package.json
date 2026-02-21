@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "pages:build": "next-on-pages",
-    "pages:dev": "wrangler pages dev",
-    "pages:deploy": "wrangler pages deploy .vercel/output/static"
+    "pages:dev": "wrangler pages dev --compatibility-flag nodejs_compat",
+    "pages:deploy": "wrangler pages deploy .vercel/output/static --compatibility-flag nodejs_compat"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.995.0",

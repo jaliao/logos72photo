@@ -333,7 +333,12 @@ curl -X POST http://localhost:3000/api/upload \
    | Build output directory | `.vercel/output/static` |
    | Root directory | `/` |
 
-3. **設定環境變數**
+3. **啟用 Node.js 相容性 flag**
+   - Pages project → **Settings** → **Functions** → **Compatibility flags**
+   - Production 欄位加入：`nodejs_compat`
+   - > ⚠️ 此步驟必須完成，否則 `@aws-sdk/client-s3` 會在 Edge Runtime 報錯
+
+4. **設定環境變數**
    - Pages project → **Settings** → **Environment variables** → **Production**
    - 依 `.dev.vars.example` 加入所有 key/value（以 Encrypted 儲存 secrets）
 
