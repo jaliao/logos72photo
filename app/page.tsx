@@ -6,7 +6,10 @@
  * ----------------------------------------------
  */
 
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useRef } from 'react'
 
 // 時段定義
 const SLOTS = [
@@ -20,15 +23,15 @@ function todayStr(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-// Server Action：導航至相簿列表頁
-async function navigateToSlot(formData: FormData) {
-  'use server'
-  const date = formData.get('date') as string
-  const slot = formData.get('slot') as string
-  redirect(`/gallery/${date}/${slot}`)
-}
-
 export default function HomePage() {
+  const router = useRouter()
+  const dateRef = useRef<HTMLInputElement>(null)
+
+  function navigate(slot: number) {
+    const date = dateRef.current?.value ?? todayStr()
+    router.push(`/gallery/${date}/${slot}`)
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 p-6">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
@@ -36,16 +39,17 @@ export default function HomePage() {
           讀經接力照片
         </h1>
         <p className="mb-8 text-center text-sm text-zinc-500">
-          選擇日期與時段，瀏覽對應的 15 分鐘相簿
+          選擇日期與時段，瀏覽對應的 1 小時相簿
         </p>
 
-        <form action={navigateToSlot} className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6">
           {/* 日期選擇器 */}
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
               日期
             </label>
             <input
+              ref={dateRef}
               type="date"
               name="date"
               defaultValue={todayStr()}
@@ -61,9 +65,8 @@ export default function HomePage() {
               {SLOTS.map((slot) => (
                 <button
                   key={slot.value}
-                  type="submit"
-                  name="slot"
-                  value={String(slot.value)}
+                  type="button"
+                  onClick={() => navigate(slot.value)}
                   className="w-full rounded-xl bg-zinc-800 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 active:scale-95"
                 >
                   {slot.label}
@@ -71,7 +74,7 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </main>
   )
