@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 相機客戶端元件（含 NoSleep、RTDB 監聽、MediaDevices）
- * 2026-02-21
+ * 2026-02-21 (Updated: 2026-02-21)
  * app/camera/CameraClient.tsx
  * ----------------------------------------------
  */
@@ -28,7 +28,14 @@ export default function CameraClient() {
   const [lastHeartbeat, setLastHeartbeat] = useState<number | null>(null)
   const [flashGreen, setFlashGreen] = useState(false)
   const [warnNoTrigger, setWarnNoTrigger] = useState(false)
+  // 3.1 最後收到的 RTDB 觸發時間戳記（顯示於 UI 供除錯）
+  const [lastRtdbTrigger, setLastRtdbTrigger] = useState<number | null>(null)
+
   const lastTriggerRef = useRef<number>(Date.now())
+  // 1.1 穩定 RTDB 監聽器用的 ref（初始為 no-op，在 useEffect 中同步最新 shoot）
+  const shootRef = useRef<() => void>(async () => {})
+  // 2.1 上次已處理的 RTDB 觸發值（初始為頁面載入時間，防止重播舊觸發）
+  const lastProcessedTriggerRef = useRef<number>(Date.now())
 
   const deviceId = process.env.NEXT_PUBLIC_DEVICE_ID ?? 'iphone-unknown'
 
@@ -83,6 +90,11 @@ export default function CameraClient() {
     }, 'image/jpeg', 0.92)
   }, [deviceId, status])
 
+  // 1.1 每次 render 同步最新的 shoot 至 shootRef，避免 RTDB 監聽器持有過期閉包
+  useEffect(() => {
+    shootRef.current = shoot
+  }, [shoot])
+
   // 啟動相機串流
   useEffect(() => {
     let stream: MediaStream | null = null
@@ -118,6 +130,7 @@ export default function CameraClient() {
   }, [])
 
   // 3.3 Firebase RTDB 監聽 trigger/last_shot
+  // 1.2 依賴改為 []，監聽器只掛載一次，callback 透過 shootRef 呼叫最新的 shoot
   useEffect(() => {
     const triggerRef = ref(getRtdb(), 'trigger/last_shot')
 
@@ -125,18 +138,21 @@ export default function CameraClient() {
       const val: number | null = snapshot.val()
       if (!val) return
 
-      const now = Date.now()
-      lastTriggerRef.current = now
-      setWarnNoTrigger(false)
+      // 3.1 更新 UI 顯示的 RTDB 觸發時間
+      setLastRtdbTrigger(val)
 
-      // 僅當收到的時間戳記是近 10 秒內才觸發拍照（避免重放舊值）
-      if (now - val < 10_000) {
-        shoot()
+      // 2.2 以「值遞增」作為觸發條件，完全避免時脈偏差問題
+      if (val > lastProcessedTriggerRef.current) {
+        // 2.3 先更新已處理的觸發值，再執行拍照
+        lastProcessedTriggerRef.current = val
+        lastTriggerRef.current = Date.now()
+        setWarnNoTrigger(false)
+        shootRef.current()
       }
     })
 
     return () => unsubscribe()
-  }, [shoot])
+  }, [])
 
   // 7.1 心跳：每 30 秒透過 API 寫入 Firestore（Admin SDK，繞過 rules）
   useEffect(() => {
@@ -219,6 +235,10 @@ export default function CameraClient() {
             {status === 'error' && '⚠️ 錯誤'}
           </span>
           <span>最後拍照：{formatTime(lastShotAt)}</span>
+        </div>
+        {/* 3.2 RTDB 觸發時間顯示（供現場判斷觸發鏈路是否正常） */}
+        <div className="mt-1 flex justify-between">
+          <span>RTDB 觸發：{formatTime(lastRtdbTrigger)}</span>
         </div>
         {warnNoTrigger && (
           <p className="mt-1 text-center font-bold text-red-400">

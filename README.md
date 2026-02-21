@@ -15,9 +15,10 @@
    - [相機頁面（iPhone PWA）](#相機頁面iphone-pwa)
    - [觸發 API](#觸發-api)
    - [監控儀表板](#監控儀表板)
-6. [部署至 Cloudflare Pages](#部署至-cloudflare-pages)
-7. [外部服務未就緒時的測試方式](#外部服務未就緒時的測試方式)
-8. [常見錯誤排查](#常見錯誤排查)
+6. [觸發鏈路除錯指南](#觸發鏈路除錯指南)
+7. [部署至 Cloudflare Pages](#部署至-cloudflare-pages)
+8. [外部服務未就緒時的測試方式](#外部服務未就緒時的測試方式)
+9. [常見錯誤排查](#常見錯誤排查)
 
 ---
 
@@ -311,6 +312,49 @@ curl -X POST http://localhost:3000/api/upload \
    - 最後心跳時間
    - 最新照片縮圖（需先上傳至少一張照片）
 4. 若超過 5 分鐘未收到心跳，裝置狀態應顯示紅色「失聯」
+
+---
+
+## 觸發鏈路除錯指南
+
+自動拍照的完整觸發鏈路：
+
+```
+Cloudflare Worker Cron（每 5 分鐘）
+  → POST /api/trigger（帶 x-trigger-secret）
+  → Firebase RTDB trigger/last_shot 更新
+  → iPhone 相機頁面收到 RTDB 推送
+  → 執行拍照 → 上傳至 R2 → 寫入 Firestore
+```
+
+### 各環節檢查方式
+
+| 環節 | 檢查方式 |
+|------|---------|
+| **Cron Worker** | Cloudflare Dashboard → **Workers & Pages** → `logos72photo-cron` → **Logs** → 確認每 5 分鐘有成功執行紀錄 |
+| **觸發 API** | 手動呼叫（見下方），確認回傳 `{"ok":true}` |
+| **RTDB 更新** | Firebase Console → Realtime Database → 確認 `trigger/last_shot` 值有隨時間遞增 |
+| **iPhone 監聽端** | 觀察相機頁面（`/camera`）狀態列的「**RTDB 觸發**」欄位是否有更新時間 |
+
+**手動呼叫觸發 API（用於隔離測試）：**
+
+```bash
+# 觸發本機 dev server
+curl -X POST http://localhost:3000/api/trigger \
+  -H "x-trigger-secret: $(grep TRIGGER_API_SECRET .env.local | cut -d= -f2)"
+
+# 觸發正式環境
+curl -X POST https://logos72photo.pages.dev/api/trigger \
+  -H "x-trigger-secret: YOUR_SECRET"
+```
+
+### 如何區分問題來源
+
+| 現象 | 問題所在 | 建議行動 |
+|------|---------|---------|
+| 相機頁面「RTDB 觸發」欄位**時間沒有更新** | Cron/API 端 | 1. 確認 Worker 是否部署：`wrangler deploy workers/cron-trigger.ts` <br>2. 確認 Worker secret 是否設定：`wrangler secret put TRIGGER_API_SECRET` <br>3. 手動呼叫 `/api/trigger` 測試 API 本身是否正常 |
+| 相機頁面「RTDB 觸發」欄位**有更新**但沒有拍照 | iPhone 監聽端 | 1. 確認瀏覽器已允許攝影機權限 <br>2. 確認頁面未在背景被 iOS 暫停（保持螢幕常亮） <br>3. 確認「最後 RTDB 觸發」時間與「最後拍照」時間差距是否合理 |
+| 相機背景**變紅**（`⚠️ 超過 5 分鐘未收到拍照指令`） | 超過 5 分鐘未收到新的有效 RTDB 觸發 | 依上表逐層排查 |
 
 ---
 
