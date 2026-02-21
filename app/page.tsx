@@ -18,9 +18,9 @@ const SLOTS = [
   { label: '16:00 – 24:00', value: 16 },
 ] as const
 
-// 今日日期預設值
+// 今日日期預設值（台灣時間 UTC+8）
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10)
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
 export default function HomePage() {

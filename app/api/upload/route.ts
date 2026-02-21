@@ -26,8 +26,12 @@ export async function POST(req: NextRequest) {
     const now = new Date()
     const timestamp = now.getTime()
 
-    // 建立 R2 路徑：YYYY-MM-DD/device_id_timestamp.jpg
-    const dateStr = now.toISOString().slice(0, 10)
+    // 台灣時間（UTC+8）計算日期與時段
+    const TW_OFFSET_MS = 8 * 60 * 60 * 1000
+    const taiwanNow = new Date(timestamp + TW_OFFSET_MS)
+
+    // 建立 R2 路徑：YYYY-MM-DD/device_id_timestamp.jpg（台灣日期）
+    const dateStr = taiwanNow.toISOString().slice(0, 10)
     const key = `${dateStr}/${deviceId}_${timestamp}.jpg`
 
     // 上傳至 R2（使用 Uint8Array，相容 Edge Runtime）
@@ -40,9 +44,9 @@ export async function POST(req: NextRequest) {
       r2_url: r2Url,
       timestamp,
       device_id: deviceId,
-      date: dateStr,
-      slot_8h: getSlot8h(now),
-      slot_15m: getSlot15m(now),
+      date: dateStr,           // 台灣日期
+      slot_8h: getSlot8h(taiwanNow),   // 台灣時段
+      slot_15m: getSlot15m(taiwanNow), // 台灣 15 分鐘子相簿
     }
     await addDoc('photos', photoDoc as unknown as Record<string, unknown>)
 
