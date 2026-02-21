@@ -3,7 +3,7 @@
 
 # 從 .env.local 讀取 secret
 SECRET=$(grep TRIGGER_API_SECRET "$(dirname "$0")/../.env.local" | cut -d= -f2)
-URL="${1:-http://localhost:3000}/api/trigger"
+URL="${1:-https://logos72photo.pages.dev}/api/trigger"
 
 if [ -z "$SECRET" ]; then
   echo "錯誤：找不到 TRIGGER_API_SECRET（請確認 .env.local 存在）"

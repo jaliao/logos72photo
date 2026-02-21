@@ -9,5 +9,5 @@
 ## 2. 部署與驗證
 
 - [x] 2.1 `npm run build` 確認無錯誤
-- [ ] 2.2 `git push origin main` 觸發 Cloudflare Pages 重新部署
-- [ ] 2.3 正式環境確認：瀏覽器分頁顯示正確標題與 favicon
+- [x] 2.2 `git push origin main` 觸發 Cloudflare Pages 重新部署
+- [x] 2.3 正式環境確認：瀏覽器分頁顯示正確標題與 favicon
