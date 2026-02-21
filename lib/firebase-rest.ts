@@ -220,6 +220,60 @@ export async function setDoc(
   }
 }
 
+/**
+ * Firestore REST：讀取集合所有文件
+ * @param collectionPath 集合路徑，例如 "devices"
+ * @returns 文件資料陣列（已解析為 JS 物件）
+ */
+export async function listDocs<T = Record<string, unknown>>(
+  collectionPath: string,
+): Promise<T[]> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionPath}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore listDocs 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const data = (await res.json()) as { documents?: { fields: Record<string, unknown> }[] }
+  if (!data.documents) return []
+
+  return data.documents.map((doc) => parseFirestoreFields(doc.fields) as T)
+}
+
+/** 將 Firestore fields map 還原為 JS 物件 */
+function parseFirestoreFields(fields: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(fields).map(([k, v]) => [k, parseFirestoreValue(v as Record<string, unknown>)]),
+  )
+}
+
+/** 將 Firestore Value 格式還原為 JS 值 */
+function parseFirestoreValue(value: Record<string, unknown>): unknown {
+  if ('nullValue' in value) return null
+  if ('booleanValue' in value) return value.booleanValue
+  if ('integerValue' in value) return Number(value.integerValue)
+  if ('doubleValue' in value) return value.doubleValue
+  if ('stringValue' in value) return value.stringValue
+  if ('timestampValue' in value) return new Date(value.timestampValue as string).getTime()
+  if ('arrayValue' in value) {
+    const arr = value.arrayValue as { values?: Record<string, unknown>[] }
+    return (arr.values ?? []).map(parseFirestoreValue)
+  }
+  if ('mapValue' in value) {
+    const map = value.mapValue as { fields?: Record<string, unknown> }
+    return parseFirestoreFields((map.fields ?? {}) as Record<string, unknown>)
+  }
+  return null
+}
+
 // ─── RTDB REST ─────────────────────────────────────────────────────────────
 
 /**

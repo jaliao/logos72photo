@@ -11,8 +11,7 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 import Image from 'next/image'
-import { collection, getDocs } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { listDocs } from '@/lib/firebase-rest'
 import type { DeviceDoc } from '@/lib/types'
 
 // 電量顯示
@@ -48,8 +47,7 @@ function HeartbeatStatus({ ts, now }: { ts: number; now: number }) {
 }
 
 async function getDevices(): Promise<DeviceDoc[]> {
-  const snap = await getDocs(collection(db, 'devices'))
-  return snap.docs.map((d) => d.data() as DeviceDoc)
+  return listDocs<DeviceDoc>('devices')
 }
 
 export default async function MonitoringPage() {
