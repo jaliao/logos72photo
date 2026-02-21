@@ -19,5 +19,6 @@ export const metadata: Metadata = {
 }
 
 export default function CameraPage() {
-  return <CameraClient />
+  const deviceId = process.env.NEXT_PUBLIC_DEVICE_ID ?? 'iphone-unknown'
+  return <CameraClient deviceId={deviceId} />
 }
