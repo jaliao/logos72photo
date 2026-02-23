@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 相機客戶端元件（含 NoSleep、RTDB 監聽、MediaDevices）
- * 2026-02-21 (Updated: 2026-02-21)
+ * 2026-02-21 (Updated: 2026-02-23)
  * app/camera/CameraClient.tsx
  * ----------------------------------------------
  */
@@ -53,31 +53,35 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const nosleepRef = useRef<{ enable(): void; disable(): void } | null>(null)
 
-  const [status, setStatus] = useState<'idle' | 'shooting' | 'uploading' | 'error'>('idle')
+  // 1.1 status union 加入 'countdown'
+  const [status, setStatus] = useState<'idle' | 'countdown' | 'shooting' | 'uploading' | 'error'>('idle')
   const [lastShotAt, setLastShotAt] = useState<number | null>(null)
   const [lastHeartbeat, setLastHeartbeat] = useState<number | null>(null)
   const [flashGreen, setFlashGreen] = useState(false)
   const [warnNoTrigger, setWarnNoTrigger] = useState(false)
-  // 3.1 最後收到的 RTDB 觸發時間戳記（顯示於 UI 供除錯）
+  // RTDB 觸發時間戳記（顯示於 UI 供除錯）
   const [lastRtdbTrigger, setLastRtdbTrigger] = useState<number | null>(null)
   // standalone 偵測（null = SSR 尚未判斷）
   const [isStandalone, setIsStandalone] = useState<boolean | null>(null)
+  // 1.2 前後鏡頭狀態（預設後鏡頭）
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
+  // 1.3 倒數秒數
+  const [countdown, setCountdown] = useState(0)
+  // 5.2 當前時間（每秒更新，顯示於狀態列）
+  const [currentTime, setCurrentTime] = useState('')
 
   const lastTriggerRef = useRef<number>(Date.now())
-  // 1.1 穩定 RTDB 監聽器用的 ref（初始為 no-op，在 useEffect 中同步最新 shoot）
+  // 穩定 RTDB 監聽器用的 ref（初始為 no-op，在 useEffect 中同步最新 shoot）
   const shootRef = useRef<() => void>(async () => { })
   // 2.1 上次已處理的 RTDB 觸發值（初始為頁面載入時間，防止重播舊觸發）
   const lastProcessedTriggerRef = useRef<number>(Date.now())
+  // 1.4 倒數計時器 interval ID
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // 穩定 RTDB 監聽器用的 startCountdown ref
+  const startCountdownRef = useRef<() => void>(() => { })
 
   // PWA standalone 模式偵測（client-only）
   useEffect(() => {
-    // const standalone =
-    //   window.matchMedia('(display-mode: standalone)').matches ||
-    //   (navigator as Navigator & { standalone?: boolean }).standalone === true
-    // setIsStandalone(standalone)
-
-    // 2026-02-21 更新：改為直接判斷是否為 iOS Safari，因為實測發現部分 Android 裝置的 Chrome 在非 standalone 模式下也能正常使用相機 API，反而是 iOS Safari 需要強制進入 standalone 才能穩定運作
-
     setIsStandalone(true)
   }, [])
 
@@ -85,6 +89,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   const shoot = useCallback(async () => {
     const video = videoRef.current
     const canvas = canvasRef.current
+    // 3.3 guard：shooting / uploading 期間不重複拍照；countdown 結束後可正常執行
     if (!video || !canvas || status === 'shooting' || status === 'uploading') return
 
     setStatus('shooting')
@@ -123,7 +128,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
           body: JSON.stringify({ device_id: deviceId, battery_level: null, last_photo_url: url, last_shot_at: now }),
         })
 
-        // 7.2 拍照成功 → 綠色邊框閃爍
+        // 拍照成功 → 綠色邊框閃爍
         setFlashGreen(true)
         setTimeout(() => setFlashGreen(false), 1500)
       } catch {
@@ -132,18 +137,43 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     }, 'image/jpeg', 0.92)
   }, [deviceId, status])
 
-  // 1.1 每次 render 同步最新的 shoot 至 shootRef，避免 RTDB 監聽器持有過期閉包
+  // 每次 render 同步最新的 shoot 至 shootRef，避免 RTDB 監聽器持有過期閉包
   useEffect(() => {
     shootRef.current = shoot
   }, [shoot])
 
-  // 啟動相機串流（僅 standalone 模式）
+  // 3.1 啟動倒數計時（收到 RTDB 觸發後呼叫）
+  const startCountdown = useCallback(() => {
+    // guard：非 idle 時忽略（防止倒數中再次觸發）
+    if (status !== 'idle') return
+    setStatus('countdown')
+    setCountdown(15)
+    let remaining = 15
+    countdownRef.current = setInterval(() => {
+      remaining -= 1
+      // 3.2 每秒遞減
+      setCountdown(remaining)
+      if (remaining <= 0) {
+        clearInterval(countdownRef.current!)
+        countdownRef.current = null
+        // 倒數結束 → 執行拍照
+        shootRef.current()
+      }
+    }, 1000)
+  }, [status])
+
+  // 同步最新的 startCountdown 至 ref，供 RTDB 監聽器呼叫
+  useEffect(() => {
+    startCountdownRef.current = startCountdown
+  }, [startCountdown])
+
+  // 2.1 啟動相機串流（依賴 facingMode，切換鏡頭時重新取得串流）
   useEffect(() => {
     if (!isStandalone) return
     let stream: MediaStream | null = null
 
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({ video: { facingMode }, audio: false })
       .then((s) => {
         stream = s
         if (videoRef.current) {
@@ -153,11 +183,17 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       .catch(() => setStatus('error'))
 
     return () => {
+      // 停止舊串流所有 track
       stream?.getTracks().forEach((t) => t.stop())
+      // 3.4 清除倒數計時器，防止 memory leak
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current)
+        countdownRef.current = null
+      }
     }
-  }, [isStandalone])
+  }, [isStandalone, facingMode])
 
-  // 3.2 NoSleep.js 啟動（防止 iPhone 休眠）
+  // NoSleep.js 啟動（防止 iPhone 休眠）
   useEffect(() => {
     if (!isStandalone) return
     import('nosleep.js').then(({ default: NoSleep }) => {
@@ -173,8 +209,8 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     }
   }, [isStandalone])
 
-  // 3.3 Firebase RTDB 監聽 trigger/last_shot
-  // 1.2 依賴改為 []，監聽器只掛載一次，callback 透過 shootRef 呼叫最新的 shoot
+  // Firebase RTDB 監聽 trigger/last_shot
+  // 監聽器只掛載一次，callback 透過 startCountdownRef 呼叫最新的 startCountdown
   useEffect(() => {
     if (!isStandalone) return
     const triggerRef = ref(getRtdb(), 'trigger/last_shot')
@@ -183,16 +219,16 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       const val: number | null = snapshot.val()
       if (!val) return
 
-      // 3.1 更新 UI 顯示的 RTDB 觸發時間
+      // 更新 UI 顯示的 RTDB 觸發時間
       setLastRtdbTrigger(val)
 
-      // 2.2 以「值遞增」作為觸發條件，完全避免時脈偏差問題
+      // 以「值遞增」作為觸發條件，完全避免時脈偏差問題
       if (val > lastProcessedTriggerRef.current) {
-        // 2.3 先更新已處理的觸發值，再執行拍照
         lastProcessedTriggerRef.current = val
         lastTriggerRef.current = Date.now()
         setWarnNoTrigger(false)
-        shootRef.current()
+        // 3.1 觸發倒數（而非直接拍照）
+        startCountdownRef.current()
       }
     })
 
@@ -206,17 +242,12 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       const now = Date.now()
       setLastHeartbeat(now)
 
-      type NavWithBattery = Navigator & { getBattery?: () => Promise<{ level: number }> }
-      const battery = (navigator as NavWithBattery).getBattery
-        ? await (navigator as NavWithBattery).getBattery!()
-        : null
-
       await fetch('/api/heartbeat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           device_id: deviceId,
-          battery_level: battery?.level ?? null,
+          battery_level: null,
         }),
       })
     }
@@ -237,11 +268,29 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     return () => clearInterval(id)
   }, [isStandalone])
 
+  // 5.2 當前時間：每秒更新，顯示於狀態列
+  useEffect(() => {
+    const update = () =>
+      setCurrentTime(new Date().toLocaleTimeString('zh-TW', { hour12: false }))
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // 2.2 切換前後鏡頭（非 idle 時禁用）
+  const flipCamera = useCallback(() => {
+    if (status !== 'idle') return
+    setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+  }, [status])
+
   // SSR 或偵測中：空白畫面
   if (isStandalone === null) return null
 
   // 非 standalone（瀏覽器直接開啟）→ 顯示安裝引導
   if (!isStandalone) return <InstallGuide deviceId={deviceId} appTitle={appTitle} />
+
+  // 5.1 心跳在線判斷：距上次心跳 ≤ 30 秒為在線
+  const isOnline = lastHeartbeat !== null && Date.now() - lastHeartbeat <= 30_000
 
   return (
     <main
@@ -263,10 +312,28 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       {/* 隱藏 canvas（用於截圖） */}
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* 4.1 / 4.2 倒數覆蓋層：countdown 狀態時顯示於 video 中央 */}
+      {status === 'countdown' && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/60">
+          <span className="animate-pulse text-9xl font-bold text-white drop-shadow-lg">
+            {countdown}
+          </span>
+        </div>
+      )}
+
       {/* 綠色邊框閃爍（拍照成功回饋） */}
       {flashGreen && (
         <div className="pointer-events-none absolute inset-0 animate-pulse border-8 border-green-400" />
       )}
+
+      {/* 2.3 鏡頭切換按鈕 */}
+      <button
+        onClick={flipCamera}
+        disabled={status !== 'idle'}
+        className="absolute top-4 right-4 rounded-full bg-black/50 px-3 py-2 text-sm text-white disabled:opacity-40"
+      >
+        {facingMode === 'environment' ? '🤳 前鏡頭' : '📷 後鏡頭'}
+      </button>
 
       {/* 狀態列 */}
       <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-3 text-xs text-gray-300">
@@ -275,27 +342,37 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
             裝置：<strong>{deviceId}</strong>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 animate-ping rounded-full bg-green-400" />
-            {formatTime(lastHeartbeat)}
+            {/* 5.1 以 lastHeartbeat 時間戳判斷在線狀態 */}
+            <span
+              className={[
+                'inline-block h-2 w-2 rounded-full',
+                isOnline ? 'animate-ping bg-green-400' : 'bg-gray-500',
+              ].join(' ')}
+            />
+            {/* 5.2 顯示裝置當前時間（每秒更新） */}
+            {currentTime || '—'}
           </span>
         </div>
         <div className="mt-1 flex justify-between">
           <span>
-            狀態：
-            {status === 'idle' && '待機中'}
-            {status === 'shooting' && '拍照中...'}
-            {status === 'uploading' && '上傳中...'}
-            {status === 'error' && '⚠️ 錯誤'}
+            {/* 4.3 即將拍照狀態：閃爍提示 */}
+            {status === 'countdown' && (
+              <span className="animate-pulse text-yellow-300">即將拍照</span>
+            )}
+            {status === 'idle' && '狀態：待機中'}
+            {status === 'shooting' && '狀態：拍照中'}
+            {status === 'uploading' && '狀態：上傳中'}
+            {status === 'error' && '狀態：錯誤'}
           </span>
           <span>最後拍照：{formatTime(lastShotAt)}</span>
         </div>
-        {/* 3.2 RTDB 觸發時間顯示（供現場判斷觸發鏈路是否正常） */}
+        {/* RTDB 觸發時間顯示（供現場判斷觸發鏈路是否正常） */}
         <div className="mt-1 flex justify-between">
           <span>RTDB 觸發：{formatTime(lastRtdbTrigger)}</span>
         </div>
         {warnNoTrigger && (
           <p className="mt-1 text-center font-bold text-red-400">
-            ⚠️ 超過 5 分鐘未收到拍照指令
+            超過 5 分鐘未收到拍照指令
           </p>
         )}
       </div>
