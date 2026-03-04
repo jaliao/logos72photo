@@ -452,7 +452,7 @@ curl -X POST http://localhost:3000/api/upload \
 3. 確認卡片包含：
    - 裝置名稱（`iphone-test`）
    - 電量進度條
-   - 最後心跳時間
+   - 裝置心跳時間（含下次心跳倒數）
    - 最新照片縮圖（需先上傳至少一張照片）
 4. 若超過 5 分鐘未收到心跳，裝置狀態應顯示紅色「失聯」
 
@@ -643,6 +643,8 @@ npm run pages:deploy
 ```
 
 > ⚠️ 需先以 `wrangler login` 完成 Cloudflare 認證。
+>
+> `nodejs_compat` compatibility flag **不透過 CLI 設定**，請至 Cloudflare Dashboard → Pages 專案 → **Settings** → **Functions** → **Compatibility flags** 確認已加入（見首次設定步驟 3）。
 
 ---
 
