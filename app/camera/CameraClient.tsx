@@ -19,6 +19,19 @@ function formatTime(ts: number | null): string {
   return new Date(ts).toLocaleTimeString('zh-TW')
 }
 
+// 將錯誤傳送至 /api/log-error（fire-and-forget，不影響主流程）
+async function logError(deviceId: string, source: string, message: string): Promise<void> {
+  try {
+    await fetch('/api/log-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId, source, message }),
+    })
+  } catch {
+    // 靜默失敗
+  }
+}
+
 // PWA standalone 模式偵測（非 standalone → 顯示安裝引導，防止重複加入）
 function InstallGuide({ deviceId, appTitle }: { deviceId: string; appTitle: string }) {
   return (
@@ -102,6 +115,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
+        await logError(deviceId, 'camera:blob', 'canvas.toBlob 回傳 null，可能是相機串流中斷')
         setStatus('error')
         return
       }
@@ -114,7 +128,10 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
         formData.append('device_id', deviceId)
 
         const res = await fetch('/api/upload', { method: 'POST', body: formData })
-        if (!res.ok) throw new Error('上傳失敗')
+        if (!res.ok) {
+          const text = await res.text().catch(() => '')
+          throw new Error(`HTTP ${res.status}：${text || '上傳失敗'}`)
+        }
 
         const now = Date.now()
         const { url } = await res.json() as { url: string }
@@ -131,7 +148,9 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
         // 拍照成功 → 綠色邊框閃爍
         setFlashGreen(true)
         setTimeout(() => setFlashGreen(false), 1500)
-      } catch {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        await logError(deviceId, 'camera:upload', message)
         setStatus('error')
       }
     }, 'image/jpeg', 0.92)

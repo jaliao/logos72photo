@@ -10,7 +10,7 @@
  * 不依賴任何 Node.js 原生模組，可在 Cloudflare Workers Edge Runtime 執行。
  */
 
-import type { PhotoDoc } from './types'
+import type { PhotoDoc, ErrorLogDoc } from './types'
 
 /** 模組層級 access token 快取（每個 Worker instance 內有效） */
 let cachedToken: { value: string; expiresAt: number } | null = null
@@ -335,6 +335,51 @@ export async function queryPhotos(
   return rows
     .filter((r) => r.document)
     .map((r) => parseFirestoreFields(r.document!.fields) as unknown as PhotoDoc)
+}
+
+/**
+ * Firestore REST：依日期查詢 error_logs，依 timestamp 降冪排列
+ * @param date 台灣時間日期字串，格式 YYYY-MM-DD
+ */
+export async function queryErrorLogs(date: string): Promise<ErrorLogDoc[]> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: 'error_logs' }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'date' },
+          op: 'EQUAL',
+          value: { stringValue: date },
+        },
+      },
+      orderBy: [{ field: { fieldPath: 'timestamp' }, direction: 'DESCENDING' }],
+      limit: 500,
+    },
+  }
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore queryErrorLogs 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const rows = (await res.json()) as Array<{ document?: { fields: Record<string, unknown> } }>
+  return rows
+    .filter((r) => r.document)
+    .map((r) => parseFirestoreFields(r.document!.fields) as unknown as ErrorLogDoc)
 }
 
 // ─── RTDB REST ─────────────────────────────────────────────────────────────

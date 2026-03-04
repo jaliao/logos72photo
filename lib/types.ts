@@ -36,6 +36,22 @@ export interface DeviceDoc {
   last_shot_at: number | null
 }
 
+/** Firestore `error_logs` 集合的文件結構 */
+export interface ErrorLogDoc {
+  /** 裝置 ID（client 端錯誤）或 'server'（API 端錯誤） */
+  device_id: string
+  /** 錯誤來源，例如 'camera:blob'、'camera:upload'、'api:upload' */
+  source: string
+  /** 錯誤訊息 */
+  message: string
+  /** 發生時間（Unix timestamp，毫秒） */
+  timestamp: number
+  /** 台灣時間日期字串，格式 YYYY-MM-DD（供查詢過濾） */
+  date: string
+  /** TTL 欄位（UTC ISO 字串，7 天後由 Firestore 自動刪除） */
+  expires_at: string
+}
+
 /** 8 小時大時段 */
 export type Slot8h = 0 | 8 | 16
 

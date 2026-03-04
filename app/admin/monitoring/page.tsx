@@ -89,14 +89,22 @@ export default function MonitoringPage() {
             <h1 className="mb-2 text-2xl font-bold">監控儀表板</h1>
             <p className="text-sm text-zinc-400">讀經接力相機系統狀態</p>
           </div>
-          <form action={logoutAction}>
-            <button
-              type="submit"
+          <div className="flex items-center gap-3">
+            <a
+              href="/admin/errors"
               className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
             >
-              登出
-            </button>
-          </form>
+              錯誤日誌
+            </a>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
+              >
+                登出
+              </button>
+            </form>
+          </div>
         </div>
 
         {loading ? (

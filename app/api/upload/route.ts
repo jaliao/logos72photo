@@ -13,11 +13,31 @@ import { uploadToR2 } from '@/lib/r2'
 import { addDoc } from '@/lib/firebase-rest'
 import { getSlot8h, getSlot15m, type PhotoDoc } from '@/lib/types'
 
+const TW_OFFSET_MS = 8 * 60 * 60 * 1000
+const TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+async function writeErrorLog(deviceId: string, message: string): Promise<void> {
+  try {
+    const now = Date.now()
+    await addDoc('error_logs', {
+      device_id: deviceId,
+      source: 'api:upload',
+      message,
+      timestamp: now,
+      date: new Date(now + TW_OFFSET_MS).toISOString().slice(0, 10),
+      expires_at: new Date(now + TTL_MS).toISOString(),
+    })
+  } catch {
+    // 靜默失敗，避免遮蔽原始錯誤
+  }
+}
+
 export async function POST(req: NextRequest) {
+  let deviceId = 'unknown'
   try {
     const formData = await req.formData()
     const photo = formData.get('photo') as File | null
-    const deviceId = formData.get('device_id') as string | null
+    deviceId = (formData.get('device_id') as string | null) ?? 'unknown'
 
     if (!photo || !deviceId) {
       return NextResponse.json({ error: '缺少必要欄位' }, { status: 400 })
@@ -27,7 +47,6 @@ export async function POST(req: NextRequest) {
     const timestamp = now.getTime()
 
     // 台灣時間（UTC+8）計算日期與時段
-    const TW_OFFSET_MS = 8 * 60 * 60 * 1000
     const taiwanNow = new Date(timestamp + TW_OFFSET_MS)
 
     // 建立 R2 路徑：YYYY-MM-DD/device_id_timestamp.jpg（台灣日期）
@@ -52,7 +71,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, url: r2Url })
   } catch (err) {
-    console.error('上傳失敗：', err)
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('上傳失敗：', message)
+    await writeErrorLog(deviceId, message)
     return NextResponse.json({ error: '伺服器錯誤' }, { status: 500 })
   }
 }
