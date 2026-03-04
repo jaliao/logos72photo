@@ -6,6 +6,9 @@
  * ----------------------------------------------
  */
 
+// 倒數秒數常數（收到觸發後倒數此秒數再拍照）
+const COUNTDOWN_SECONDS = 10
+
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
@@ -13,10 +16,20 @@ import { ref, onValue } from 'firebase/database'
 import { getRtdb } from '@/lib/firebase-rtdb'
 import { HEARTBEAT_INTERVAL_MS } from '@/lib/constants'
 
-// 格式化最後連線時間
+// 格式化時間為「上午/下午 H:MM:SS」（12 時制）
+function formatTime12(date: Date): string {
+  const hours = date.getHours()
+  const period = hours < 12 ? '上午' : '下午'
+  const h = hours % 12 || 12
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+  return `${period} ${h}:${mm}:${ss}`
+}
+
+// 格式化時間戳為「上午/下午 H:MM:SS」，null 顯示 '—'
 function formatTime(ts: number | null): string {
   if (!ts) return '—'
-  return new Date(ts).toLocaleTimeString('zh-TW')
+  return formatTime12(new Date(ts))
 }
 
 // 將錯誤傳送至 /api/log-error（fire-and-forget，不影響主流程）
@@ -166,8 +179,8 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     // guard：非 idle 時忽略（防止倒數中再次觸發）
     if (status !== 'idle') return
     setStatus('countdown')
-    setCountdown(15)
-    let remaining = 15
+    setCountdown(COUNTDOWN_SECONDS)
+    let remaining = COUNTDOWN_SECONDS
     countdownRef.current = setInterval(() => {
       remaining -= 1
       // 3.2 每秒遞減
@@ -311,10 +324,9 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     return () => clearInterval(id)
   }, [deviceId, isStandalone])
 
-  // 5.2 當前時間：每秒更新，顯示於狀態列
+  // 5.2 當前時間：每秒更新，顯示於狀態列（12 時制）
   useEffect(() => {
-    const update = () =>
-      setCurrentTime(new Date().toLocaleTimeString('zh-TW', { hour12: false }))
+    const update = () => setCurrentTime(formatTime12(new Date()))
     update()
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
