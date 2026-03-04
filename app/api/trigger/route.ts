@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * API Route：觸發拍照（更新 RTDB trigger/last_shot）
- * 2026-02-21 (Updated: 2026-02-21)
+ * API Route：時間同步（更新 RTDB sync/server_time）
+ * 2026-02-21 (Updated: 2026-03-04)
  * app/api/trigger/route.ts
  * ----------------------------------------------
  */
@@ -19,10 +19,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const triggeredAt = Date.now()
-    await rtdbSet('trigger/last_shot', triggeredAt)
+    const serverTime = Date.now()
+    // 寫入時間同步節點（裝置用於計算與伺服器的時差）
+    await rtdbSet('sync/server_time', serverTime)
 
-    return NextResponse.json({ ok: true, triggered_at: triggeredAt })
+    return NextResponse.json({ ok: true, server_time: serverTime })
   } catch (err) {
     console.error('觸發失敗：', err)
     return NextResponse.json({ error: '伺服器錯誤' }, { status: 500 })

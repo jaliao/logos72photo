@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 相機客戶端元件（含 NoSleep、RTDB 監聽、MediaDevices）
- * 2026-02-21 (Updated: 2026-02-23)
+ * 相機客戶端元件（含 NoSleep、本地定時拍照、RTDB 時間同步）
+ * 2026-02-21 (Updated: 2026-03-04)
  * app/camera/CameraClient.tsx
  * ----------------------------------------------
  */
@@ -58,9 +58,8 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   const [lastShotAt, setLastShotAt] = useState<number | null>(null)
   const [lastHeartbeat, setLastHeartbeat] = useState<number | null>(null)
   const [flashGreen, setFlashGreen] = useState(false)
-  const [warnNoTrigger, setWarnNoTrigger] = useState(false)
-  // RTDB 觸發時間戳記（顯示於 UI 供除錯）
-  const [lastRtdbTrigger, setLastRtdbTrigger] = useState<number | null>(null)
+  // 裝置與伺服器的時差（ms），由 RTDB sync/server_time 計算
+  const [timeDiffMs, setTimeDiffMs] = useState<number | null>(null)
   // standalone 偵測（null = SSR 尚未判斷）
   const [isStandalone, setIsStandalone] = useState<boolean | null>(null)
   // 1.2 前後鏡頭狀態（預設後鏡頭）
@@ -70,15 +69,12 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   // 5.2 當前時間（每秒更新，顯示於狀態列）
   const [currentTime, setCurrentTime] = useState('')
 
-  const lastTriggerRef = useRef<number>(Date.now())
-  // 穩定 RTDB 監聽器用的 ref（初始為 no-op，在 useEffect 中同步最新 shoot）
+  // 穩定 shoot 用的 ref（供倒數計時器呼叫最新閉包）
   const shootRef = useRef<() => void>(async () => { })
-  // 2.1 上次已處理的 RTDB 觸發值（初始為頁面載入時間，防止重播舊觸發）
-  const lastProcessedTriggerRef = useRef<number>(Date.now())
   // 1.4 倒數計時器 interval ID
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  // 穩定 RTDB 監聽器用的 startCountdown ref
-  const startCountdownRef = useRef<() => void>(() => { })
+  // 本地定時拍照 timeout ID
+  const shotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // PWA standalone 模式偵測（client-only）
   useEffect(() => {
@@ -162,7 +158,8 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     }, 1000)
   }, [status])
 
-  // 同步最新的 startCountdown 至 ref，供 RTDB 監聽器呼叫
+  // 同步最新的 startCountdown 至 ref，供定時器呼叫
+  const startCountdownRef = useRef<() => void>(() => { })
   useEffect(() => {
     startCountdownRef.current = startCountdown
   }, [startCountdown])
@@ -172,8 +169,14 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     if (!isStandalone) return
     let stream: MediaStream | null = null
 
+    // iPhone 偵測：使用最大解析度串流
+    const isIphone = navigator.userAgent.includes('iPhone')
+    const videoConstraints = isIphone
+      ? { facingMode, width: { ideal: 9999 }, height: { ideal: 9999 } }
+      : { facingMode }
+
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode }, audio: false })
+      .getUserMedia({ video: videoConstraints, audio: false })
       .then((s) => {
         stream = s
         if (videoRef.current) {
@@ -209,29 +212,48 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     }
   }, [isStandalone])
 
-  // Firebase RTDB 監聽 trigger/last_shot
-  // 監聽器只掛載一次，callback 透過 startCountdownRef 呼叫最新的 startCountdown
+  // 本地定時拍照：計算距下一個整 5 分鐘的延遲並排程
+  // 每次拍照結束後（status 回到 idle）重新呼叫此函式
+  const scheduleNextShot = useCallback(() => {
+    if (shotTimerRef.current) clearTimeout(shotTimerRef.current)
+    const now = Date.now()
+    const interval = 5 * 60_000
+    // 計算下一個整 5 分鐘時刻
+    const nextShot = Math.ceil((now + 1) / interval) * interval
+    let delay = nextShot - now
+    // 距整點不足 2 秒則跳過此輪，改排程下一個整點
+    if (delay < 2000) delay += interval
+    shotTimerRef.current = setTimeout(() => {
+      startCountdownRef.current()
+    }, delay)
+  }, [])
+
+  // 頁面載入後立即排程第一次拍照
   useEffect(() => {
     if (!isStandalone) return
-    const triggerRef = ref(getRtdb(), 'trigger/last_shot')
+    scheduleNextShot()
+    return () => {
+      if (shotTimerRef.current) clearTimeout(shotTimerRef.current)
+    }
+  }, [isStandalone, scheduleNextShot])
 
-    const unsubscribe = onValue(triggerRef, (snapshot) => {
+  // status 回到 idle 後重新排程（拍照完成 → 安排下一次）
+  useEffect(() => {
+    if (isStandalone && status === 'idle') {
+      scheduleNextShot()
+    }
+  }, [isStandalone, status, scheduleNextShot])
+
+  // Firebase RTDB 監聽 sync/server_time（時間同步，不觸發拍照）
+  useEffect(() => {
+    if (!isStandalone) return
+    const syncRef = ref(getRtdb(), 'sync/server_time')
+    const unsubscribe = onValue(syncRef, (snapshot) => {
       const val: number | null = snapshot.val()
       if (!val) return
-
-      // 更新 UI 顯示的 RTDB 觸發時間
-      setLastRtdbTrigger(val)
-
-      // 以「值遞增」作為觸發條件，完全避免時脈偏差問題
-      if (val > lastProcessedTriggerRef.current) {
-        lastProcessedTriggerRef.current = val
-        lastTriggerRef.current = Date.now()
-        setWarnNoTrigger(false)
-        // 3.1 觸發倒數（而非直接拍照）
-        startCountdownRef.current()
-      }
+      // 計算裝置與伺服器時差（正值表示伺服器較快）
+      setTimeDiffMs(val - Date.now())
     })
-
     return () => unsubscribe()
   }, [isStandalone])
 
@@ -256,17 +278,6 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     const id = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
     return () => clearInterval(id)
   }, [deviceId, isStandalone])
-
-  // 監控：超過 5 分鐘未收到觸發指令 → 背景轉紅
-  useEffect(() => {
-    if (!isStandalone) return
-    const id = setInterval(() => {
-      if (Date.now() - lastTriggerRef.current > 5 * 60_000) {
-        setWarnNoTrigger(true)
-      }
-    }, 15_000)
-    return () => clearInterval(id)
-  }, [isStandalone])
 
   // 5.2 當前時間：每秒更新，顯示於狀態列
   useEffect(() => {
@@ -293,13 +304,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   const isOnline = lastHeartbeat !== null && Date.now() - lastHeartbeat <= 30_000
 
   return (
-    <main
-      className={[
-        'relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden',
-        'bg-black text-white',
-        warnNoTrigger ? 'bg-red-950' : '',
-      ].join(' ')}
-    >
+    <main className="relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden bg-black text-white">
       {/* 相機預覽 */}
       <video
         ref={videoRef}
@@ -366,15 +371,12 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
           </span>
           <span>最後拍照：{formatTime(lastShotAt)}</span>
         </div>
-        {/* RTDB 觸發時間顯示（供現場判斷觸發鏈路是否正常） */}
+        {/* 時差顯示（供現場判斷裝置時間是否偏差） */}
         <div className="mt-1 flex justify-between">
-          <span>RTDB 觸發：{formatTime(lastRtdbTrigger)}</span>
+          <span>
+            時差：{timeDiffMs === null ? '—' : `${timeDiffMs >= 0 ? '+' : ''}${timeDiffMs}ms`}
+          </span>
         </div>
-        {warnNoTrigger && (
-          <p className="mt-1 text-center font-bold text-red-400">
-            超過 5 分鐘未收到拍照指令
-          </p>
-        )}
       </div>
     </main>
   )
