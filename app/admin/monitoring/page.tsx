@@ -50,12 +50,13 @@ function HeartbeatStatus({ ts, now }: { ts: number; now: number }) {
   )
 }
 
-// 下次心跳倒數
-function NextHeartbeatCountdown({ ts, now }: { ts: number; now: number }) {
+// 裝置心跳時間（含下次心跳倒數）
+function HeartbeatTimeWithCountdown({ ts, now }: { ts: number; now: number }) {
   const isOffline = now - ts > OFFLINE_THRESHOLD_MS
-  if (isOffline) return <span>—</span>
+  const timeStr = formatTs(ts)
+  if (isOffline) return <span>{timeStr}</span>
   const secsLeft = Math.max(0, Math.round((ts + HEARTBEAT_INTERVAL_MS - now) / 1000))
-  return <span>約 {secsLeft} 秒後</span>
+  return <span>{timeStr} ( 約 {secsLeft} 秒後 )</span>
 }
 
 export default function MonitoringPage() {
@@ -147,12 +148,8 @@ export default function MonitoringPage() {
                   {/* 時間資訊 */}
                   <div className="space-y-1 text-xs text-zinc-400">
                     <div className="flex justify-between">
-                      <span>最後心跳</span>
-                      <span>{formatTs(device.last_heartbeat)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>下次心跳</span>
-                      <NextHeartbeatCountdown ts={device.last_heartbeat} now={now} />
+                      <span>裝置心跳</span>
+                      <HeartbeatTimeWithCountdown ts={device.last_heartbeat} now={now} />
                     </div>
                     <div className="flex justify-between">
                       <span>最後拍照</span>
