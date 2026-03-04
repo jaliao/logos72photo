@@ -60,6 +60,10 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   const [flashGreen, setFlashGreen] = useState(false)
   // 裝置與伺服器的時差（ms），由 RTDB sync/server_time 計算
   const [timeDiffMs, setTimeDiffMs] = useState<number | null>(null)
+  // 最後 RTDB 同步時刻
+  const [lastRtdbSyncAt, setLastRtdbSyncAt] = useState<number | null>(null)
+  // 下次拍照預定時刻
+  const [nextShotAt, setNextShotAt] = useState<number | null>(null)
   // standalone 偵測（null = SSR 尚未判斷）
   const [isStandalone, setIsStandalone] = useState<boolean | null>(null)
   // 1.2 前後鏡頭狀態（預設後鏡頭）
@@ -223,6 +227,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     let delay = nextShot - now
     // 距整點不足 2 秒則跳過此輪，改排程下一個整點
     if (delay < 2000) delay += interval
+    setNextShotAt(now + delay)
     shotTimerRef.current = setTimeout(() => {
       startCountdownRef.current()
     }, delay)
@@ -244,6 +249,13 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     }
   }, [isStandalone, status, scheduleNextShot])
 
+  // error 自動恢復：3 秒後重設為 idle，確保排程不中斷
+  useEffect(() => {
+    if (!isStandalone || status !== 'error') return
+    const id = setTimeout(() => setStatus('idle'), 3000)
+    return () => clearTimeout(id)
+  }, [isStandalone, status])
+
   // Firebase RTDB 監聽 sync/server_time（時間同步，不觸發拍照）
   useEffect(() => {
     if (!isStandalone) return
@@ -253,6 +265,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       if (!val) return
       // 計算裝置與伺服器時差（正值表示伺服器較快）
       setTimeDiffMs(val - Date.now())
+      setLastRtdbSyncAt(Date.now())
     })
     return () => unsubscribe()
   }, [isStandalone])
@@ -354,8 +367,8 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
                 isOnline ? 'animate-ping bg-green-400' : 'bg-gray-500',
               ].join(' ')}
             />
-            {/* 5.2 顯示裝置當前時間（每秒更新） */}
-            {currentTime || '—'}
+            {/* 5.2 相機時間（每秒更新） */}
+            相機時間：{currentTime || '—'}
           </span>
         </div>
         <div className="mt-1 flex justify-between">
@@ -367,15 +380,13 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
             {status === 'idle' && '狀態：待機中'}
             {status === 'shooting' && '狀態：拍照中'}
             {status === 'uploading' && '狀態：上傳中'}
-            {status === 'error' && '狀態：錯誤'}
+            {status === 'error' && <span className="text-red-400">狀態：錯誤（自動恢復中）</span>}
           </span>
           <span>最後拍照：{formatTime(lastShotAt)}</span>
         </div>
-        {/* 時差顯示（供現場判斷裝置時間是否偏差） */}
         <div className="mt-1 flex justify-between">
-          <span>
-            時差：{timeDiffMs === null ? '—' : `${timeDiffMs >= 0 ? '+' : ''}${timeDiffMs}ms`}
-          </span>
+          <span>RTDB：{formatTime(lastRtdbSyncAt)}</span>
+          <span>下次拍照：{formatTime(nextShotAt)}</span>
         </div>
       </div>
     </main>
