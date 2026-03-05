@@ -17,18 +17,22 @@ let cachedToken: { value: string; expiresAt: number } | null = null
 
 // ─── 內部工具函式 ───────────────────────────────────────────────────────────
 
-/** 將 PEM 私鑰字串轉換為 ArrayBuffer（接受 PKCS#8 格式） */
-function pemToArrayBuffer(pem: string): ArrayBuffer {
+/**
+ * 將 PEM 私鑰字串解碼為 Buffer，供 SubtleCrypto.importKey 使用。
+ *
+ * 使用 Buffer.from(base64, 'base64') 而非 Uint8Array 手動解碼：
+ * - 本地開發：Next.js edge runtime 以 VM sandbox 執行，手動建立的 Uint8Array
+ *   屬於 VM realm，但 Node.js 原生 crypto.subtle 做 instanceof 檢查時用 host realm，
+ *   導致「2nd argument is not instance of ArrayBuffer」錯誤。
+ *   Node.js Buffer 是 host realm 物件，可跨 VM realm 被 WebCrypto 識別。
+ * - Cloudflare Workers：原生提供 Buffer，行為相同。
+ */
+function pemToArrayBuffer(pem: string): Buffer {
   const base64 = pem
     .replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----/g, '')
     .replace(/-----END (?:RSA )?PRIVATE KEY-----/g, '')
     .replace(/\s/g, '')
-  const binary = atob(base64)
-  const buffer = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    buffer[i] = binary.charCodeAt(i)
-  }
-  return buffer.buffer
+  return Buffer.from(base64, 'base64')
 }
 
 /** Base64URL 編碼（不含 padding） */
@@ -383,6 +387,63 @@ export async function queryErrorLogs(date: string): Promise<ErrorLogDoc[]> {
 }
 
 // ─── RTDB REST ─────────────────────────────────────────────────────────────
+
+/**
+ * Firestore REST：查詢所有有照片的日期與時段索引
+ * 使用 field mask 僅拉取 date 與 slot_8h，減少傳輸量。
+ * @returns 依日期由新到舊排序的陣列，每項包含日期與有照片的時段 Set
+ */
+export async function queryDatesWithSlots(): Promise<
+  Array<{ date: string; slots: Set<0 | 8 | 16> }>
+> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: 'photos' }],
+      select: {
+        fields: [{ fieldPath: 'date' }, { fieldPath: 'slot_8h' }],
+      },
+      limit: 2000,
+    },
+  }
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore queryDatesWithSlots 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const rows = (await res.json()) as Array<{ document?: { fields: Record<string, unknown> } }>
+
+  // 建立 Map<date, Set<slot_8h>> 去重
+  const map = new Map<string, Set<0 | 8 | 16>>()
+  for (const row of rows) {
+    if (!row.document) continue
+    const fields = parseFirestoreFields(row.document.fields)
+    const date = fields.date as string
+    const slot = fields.slot_8h as 0 | 8 | 16
+    if (!date || slot === undefined) continue
+    if (!map.has(date)) map.set(date, new Set())
+    map.get(date)!.add(slot)
+  }
+
+  // 依日期由新到舊排序
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, slots]) => ({ date, slots }))
+}
 
 /**
  * RTDB REST：寫入節點（PUT 完整覆寫）

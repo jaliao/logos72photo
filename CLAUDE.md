@@ -51,6 +51,7 @@ npm run lint
 *   **Framework:** Tailwind CSS，使用 `cn()` 做條件式 class 合併。
 *   **Component Library:** shadcn/ui（基於 Radix UI）。
 *   **Icons:** Tabler Icons（或依專案調整）。
+*   **RWD：** 所有 UI 以**行動裝置優先（Mobile-First）** 設計。Tailwind breakpoint 從 `sm:` 向上擴展，預設樣式針對手機，桌面版為漸進增強。
 
 ### 4. Version Update（via `/opsx:apply`）
 *   每次執行 `/opsx:apply` 時，**必須自動將 `config/version.json` 的 `patch` 版號 +1**。
