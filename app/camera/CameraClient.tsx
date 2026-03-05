@@ -23,7 +23,7 @@ function formatTime12(date: Date): string {
   const h = hours % 12 || 12
   const mm = String(date.getMinutes()).padStart(2, '0')
   const ss = String(date.getSeconds()).padStart(2, '0')
-  return `${period} ${h}:${mm}:${ss}`
+  return `${period}\u00A0${h}:${mm}:${ss}` // \u00A0 = non-breaking space，防止 flex 斷行
 }
 
 // 格式化時間戳為「上午/下午 H:MM:SS」，null 顯示 '—'
@@ -390,7 +390,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
           <span>
             裝置：<strong>{deviceId}</strong>
           </span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 whitespace-nowrap">
             {/* 5.1 以 lastHeartbeat 時間戳判斷在線狀態 */}
             <span
               className={[
