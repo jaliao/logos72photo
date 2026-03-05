@@ -25,12 +25,17 @@ export function resizeToWidth(buffer: Uint8Array, width: number): PhotonImage {
 }
 
 /**
- * 將 PhotonImage 編碼為 WebP 二進位資料
+ * 將 PhotonImage 編碼為 JPEG 二進位資料（lossy，quality 參數生效）
+ *
+ * 注意：photon 的 get_bytes_webp() 為 lossless WebP（無法傳入 quality），
+ * 對照片而言比 lossy JPEG 大 5–10 倍。改用 get_bytes_jpeg(quality) 可大幅縮小體積。
+ *
  * @param img     PhotonImage 實例（呼叫後不自動 free）
- * @returns       WebP Uint8Array
+ * @param quality JPEG 壓縮品質 1–100（建議 75–85）
+ * @returns       JPEG Uint8Array
  */
-export function encodeWebP(img: PhotonImage): Uint8Array {
-  return img.get_bytes_webp()
+export function encodeJpeg(img: PhotonImage, quality: number): Uint8Array {
+  return img.get_bytes_jpeg(quality)
 }
 
 /**

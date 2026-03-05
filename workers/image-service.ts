@@ -15,7 +15,7 @@
  * 部署：wrangler deploy --config wrangler.image-service.toml
  */
 
-import { resizeToWidth, encodeWebP, applyWatermark } from './lib/photon-helper'
+import { resizeToWidth, encodeJpeg, applyWatermark } from './lib/photon-helper'
 
 export interface Env {
   BUCKET: R2Bucket
@@ -23,15 +23,15 @@ export interface Env {
   WATERMARK_ENABLED: string
 }
 
-// L2 快取的 R2 key 格式
+// L2 快取的 R2 key 格式（.jpg：lossy JPEG）
 function thumbKey(width: number, quality: number, r2Key: string): string {
-  return `thumbnails/${width}w_${quality}q/${r2Key}.webp`
+  return `thumbnails/${width}w_${quality}q/${r2Key}.jpg`
 }
 
 // 快取回應的 headers
 function cacheHeaders(): HeadersInit {
   return {
-    'Content-Type': 'image/webp',
+    'Content-Type': 'image/jpeg',
     'Cache-Control': 'public, max-age=86400',
     'Access-Control-Allow-Origin': '*',
   }
@@ -104,13 +104,13 @@ export default {
         }
       }
 
-      const webpBytes = encodeWebP(resized)
+      const webpBytes = encodeJpeg(resized, quality)
       resized.free()
 
       // 同步寫入 L2
       ctx.waitUntil(
         env.BUCKET.put(l2Key, webpBytes, {
-          httpMetadata: { contentType: 'image/webp' },
+          httpMetadata: { contentType: 'image/jpeg' },
         }),
       )
 
