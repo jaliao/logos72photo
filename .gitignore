@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# wrangler 本地開發狀態（R2、KV 模擬資料）
+.wrangler/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
