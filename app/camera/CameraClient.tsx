@@ -1,15 +1,17 @@
 /*
  * ----------------------------------------------
  * 相機客戶端元件（含 NoSleep、本地定時拍照、RTDB 時間同步）
- * 2026-02-21 (Updated: 2026-03-04)
+ * 2026-02-21 (Updated: 2026-03-05)
  * app/camera/CameraClient.tsx
  * ----------------------------------------------
  */
 
+'use client'
+
 // 倒數秒數常數（收到觸發後倒數此秒數再拍照）
 const COUNTDOWN_SECONDS = 10
-
-'use client'
+// 比整 5 分鐘提早觸發的偏移量（cron: 4-59/5 * * * *，提前 60 秒）
+const TRIGGER_OFFSET_MS = 60_000
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { ref, onValue } from 'firebase/database'
@@ -254,10 +256,11 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     if (shotTimerRef.current) clearTimeout(shotTimerRef.current)
     const now = Date.now()
     const interval = 5 * 60_000
-    // 計算下一個整 5 分鐘時刻
-    const nextShot = Math.ceil((now + 1) / interval) * interval
+    // 計算下一個整 5 分鐘時刻，再減去 TRIGGER_OFFSET_MS（對齊 cron 4-59/5）
+    const nextBoundary = Math.ceil((now + 1) / interval) * interval
+    const nextShot = nextBoundary - TRIGGER_OFFSET_MS
     let delay = nextShot - now
-    // 距整點不足 2 秒則跳過此輪，改排程下一個整點
+    // 距觸發時刻不足 2 秒則跳過此輪，改排程下一個整點
     if (delay < 2000) delay += interval
     setNextShotAt(now + delay)
     shotTimerRef.current = setTimeout(() => {
@@ -390,7 +393,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
           <span>
             裝置：<strong>{deviceId}</strong>
           </span>
-          <span className="flex items-center gap-1 whitespace-nowrap">
+          <span className="flex shrink-0 items-center gap-1">
             {/* 5.1 以 lastHeartbeat 時間戳判斷在線狀態 */}
             <span
               className={[
@@ -398,8 +401,8 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
                 isOnline ? 'animate-ping bg-green-400' : 'bg-gray-500',
               ].join(' ')}
             />
-            {/* 5.2 相機時間（每秒更新） */}
-            相機時間：{currentTime || '—'}
+            {/* 5.2 相機時間（每秒更新）：whitespace-nowrap 直接掛在文字元素上，確保不斷行 */}
+            <span className="whitespace-nowrap">相機時間：{currentTime || '—'}</span>
           </span>
         </div>
         <div className="mt-1 flex justify-between">
