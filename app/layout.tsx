@@ -23,7 +23,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: '72 小時不間斷讀經接力自動拍照系統',
   description: '記錄 72 小時不間斷讀經接力活動的自動拍照成果，依日期與時段瀏覽兩台 iPhone 拍攝的照片。',
-  icons: { icon: '/favicon.png' },
+  icons: {
+    icon: [
+      { url: '/favicon/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon/favicon.ico', rel: 'shortcut icon' },
+    ],
+    apple: { url: '/favicon/apple-touch-icon.png', sizes: '180x180' },
+  },
   openGraph: {
     title: '不間斷讀經接力相簿',
     description: '記錄 72 小時不間斷讀經接力活動的自動拍照成果，依日期與時段瀏覽兩台 iPhone 拍攝的照片。',

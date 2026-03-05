@@ -1,15 +1,15 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "72 小時不間斷讀經接力",
+  "short_name": "讀經相簿",
   "icons": [
     {
-      "src": "/web-app-manifest-192x192.png",
+      "src": "/favicon/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/web-app-manifest-512x512.png",
+      "src": "/favicon/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
