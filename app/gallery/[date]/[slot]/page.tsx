@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 1 小時子相簿列表頁（依 8 小時時段）
- * 2026-02-21
+ * 2026-02-21 (Updated: 2026-03-05)
  * app/gallery/[date]/[slot]/page.tsx
  * ----------------------------------------------
  */
@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m } from '@/lib/types'
+import GalleryBackground from '@/app/components/GalleryBackground'
 
 interface Params {
   params: Promise<{ date: string; slot: string }>
@@ -63,16 +64,20 @@ export default async function SlotPage({ params }: Params) {
     slot8h === 0 ? '00:00 – 08:00' : slot8h === 8 ? '08:00 – 16:00' : '16:00 – 24:00'
 
   return (
-    <main className="min-h-screen bg-zinc-50 p-6">
-      <div className="mx-auto max-w-lg">
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-800">
+    <main className="relative min-h-screen px-4 py-8">
+      <GalleryBackground />
+      <div className="relative z-10 mx-auto max-w-lg">
+        <Link href="/" className="text-sm text-white/70 hover:text-white">
           ← 返回
         </Link>
 
-        <h1 className="mb-1 mt-4 text-xl font-bold text-zinc-800">
+        <h1
+          className="mb-1 mt-4 text-xl font-bold text-zinc-800"
+          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
+        >
           {date}
         </h1>
-        <p className="mb-6 text-sm text-zinc-500">{slotLabel}</p>
+        <p className="mb-6 text-sm text-zinc-600">{slotLabel}</p>
 
         {error && (
           <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -90,8 +95,8 @@ export default async function SlotPage({ params }: Params) {
                 className={[
                   'flex flex-col items-center justify-center rounded-xl p-4 text-sm font-medium transition',
                   hasPhotos
-                    ? 'bg-zinc-800 text-white hover:bg-zinc-700'
-                    : 'bg-zinc-200 text-zinc-400 hover:bg-zinc-300',
+                    ? 'bg-zinc-800/50 text-white hover:bg-zinc-700/60'
+                    : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200',
                 ].join(' ')}
               >
                 {formatSlot15m(albumMin)}
@@ -101,6 +106,7 @@ export default async function SlotPage({ params }: Params) {
               </Link>
             )
           })}
+        </div>
         </div>
       </div>
     </main>

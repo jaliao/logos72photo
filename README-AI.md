@@ -6,7 +6,7 @@
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.20 相簿首頁日期卡片與時段格加入 Glassmorphism 半透明效果（bg-white/50、bg-zinc-800/50），標題加上 text-shadow。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.21 相簿子頁面（時段列表、照片預覽）視覺統一為首頁 Glassmorphism 風格（動態背景 + 標題 text-shadow + 卡片半透明）。
 
 ---
 
@@ -96,7 +96,8 @@ Image Service Worker (logos72photo-image)
 
 ## 5. 關鍵業務邏輯 (Business Logic)
 
-- **相簿首頁 Glassmorphism**（v0.1.20 新增）：日期卡片 `bg-white/50` + `shadow-md`；有照片時段格 `bg-zinc-800/50`；無照片時段格維持 `bg-zinc-100`（不透明）；首頁 `<h1>` 加 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
+- **相簿子頁面視覺統一**（v0.1.21 新增）：時段列表頁（slot）與照片預覽頁（album）加入 `GalleryBackground`；標題加 `textShadow`；slot 頁小時卡片套用 `bg-zinc-800/50`；返回連結改為 `text-white/70`
+- **相簿首頁 Glassmorphism**（v0.1.20 新增）：日期卡片 `bg-white/50` + 深色 box-shadow；有照片時段格 `bg-zinc-800/50`；無照片時段格維持 `bg-zinc-100`（不透明）；首頁 `<h1>` 加 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
 - **相簿首頁卡片動畫**（v0.1.19 新增）：`GalleryDateList` Client Component；進場 staggered fadeIn（80ms × index，400ms）；退場 fadeOut（300ms）後 `router.push()`；exiting guard 防重複觸發
 - **相簿首頁動態背景**（v0.1.18 新增）：`GalleryBackground` Client Component；隨機選取 `/bg/1–10.png`；白晝↔黑夜 CSS `@keyframes dayNightCycle`（5 keyframe × 2s，opacity 0.7，右上暖色/左下深色，10s 無限循環）
 - **錯誤日誌**（v0.1.17 新增）：CameraClient 三個 catch 點補 `logError`（fire-and-forget 呼叫 `/api/log-error`）；`/api/upload` catch 直接 Admin SDK 寫入；後台 `/admin/errors` 依台灣時間日期查詢，TTL 7 天自動清除；Firestore TTL policy 需在 Console 手動設定 `expires_at` 欄位
@@ -120,7 +121,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.20**（本次）— cr-spec-260305-004：相簿首頁 Glassmorphism（日期卡片 + 時段格半透明、標題 text-shadow）
+- **v0.1.21**（本次）— cr-spec-260305-005：相簿子頁面視覺統一（GalleryBackground + 標題 text-shadow + 卡片半透明）
+- **v0.1.20** — cr-spec-260305-004：相簿首頁 Glassmorphism（日期卡片 + 時段格半透明、標題 text-shadow）
 - **v0.1.19** — cr-spec-260305-003：相簿首頁日期卡片進場淡入（staggered）+ 退場淡出（點擊攔截）動畫
 - **v0.1.18** — cr-spec-260305-002：相簿首頁白晝↔黑夜動態漸層背景 + 隨機背景圖
 - **v0.1.17** — cr-spec-260304-014：錯誤日誌機制全面建立；CameraClient/upload API catch 點修復；後台 `/admin/errors` 查閱頁面

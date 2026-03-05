@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m, type PhotoDoc } from '@/lib/types'
 import { ThumbnailImage } from '@/components/ThumbnailImage'
+import GalleryBackground from '@/app/components/GalleryBackground'
 
 /** 從 R2 URL 建構 image-service 縮圖 URL */
 function toThumbUrl(r2Url: string, width: number, quality: number): string {
@@ -63,19 +64,23 @@ export default async function AlbumPage({ params }: Params) {
   const hourLabel = `${formatSlot15m(hourMin)} – ${formatSlot15m(hourMin + 60)}`
 
   return (
-    <main className="min-h-screen bg-zinc-50 p-6">
-      <div className="mx-auto max-w-2xl">
+    <main className="relative min-h-screen px-4 py-8">
+      <GalleryBackground />
+      <div className="relative z-10 mx-auto max-w-2xl">
         <Link
           href={`/gallery/${date}/${slot}`}
-          className="text-sm text-zinc-500 hover:text-zinc-800"
+          className="text-sm text-white/70 hover:text-white"
         >
           ← 返回
         </Link>
 
-        <h1 className="mb-1 mt-4 text-xl font-bold text-zinc-800">
+        <h1
+          className="mb-1 mt-4 text-xl font-bold text-zinc-800"
+          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
+        >
           {date} · {hourLabel}
         </h1>
-        <p className="mb-6 text-sm text-zinc-500">{photos.length} 張照片</p>
+        <p className="mb-6 text-sm text-zinc-600">{photos.length} 張照片</p>
 
         {error && (
           <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
