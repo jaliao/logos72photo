@@ -252,9 +252,6 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     if (delay < 2000) delay += interval
     setNextShotAt(now + delay)
 
-    // 加上這行 Log
-    console.log("目前版本是否有 OFFSET?", TRIGGER_OFFSET_MS, "下次拍照時間:", new Date(now + delay).toLocaleTimeString())
-
     shotTimerRef.current = setTimeout(() => {
       startCountdownRef.current()
     }, delay)

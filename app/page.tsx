@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { queryDatesWithSlots } from '@/lib/firebase-rest'
+import GalleryBackground from '@/app/components/GalleryBackground'
 
 // 時段定義
 const SLOTS = [
@@ -30,13 +31,14 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-8">
-      <div className="mx-auto max-w-lg">
+    <main className="relative min-h-screen px-4 py-8">
+      <GalleryBackground />
+      <div className="relative z-10 mx-auto max-w-lg">
         {/* 標題 */}
         <h1 className="mb-1 text-2xl font-bold text-zinc-900">
           不間斷讀經接力相簿
         </h1>
-        <p className="mb-8 text-sm text-zinc-500">依日期瀏覽拍攝紀錄</p>
+        <p className="mb-8 text-sm text-zinc-700">從白天到黑夜不停的運行</p>
 
         {/* 錯誤提示 */}
         {error && (
