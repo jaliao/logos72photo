@@ -29,11 +29,11 @@
 
 ## 5. Worker 部署與驗證
 
-- [ ] 5.1 執行 `wrangler deploy --config wrangler.image-service.toml` 部署 image-service Worker
-- [ ] 5.2 設定 Wrangler secret：`wrangler secret put R2_PUBLIC_URL --config wrangler.image-service.toml`（若未放 vars）
-- [ ] 5.3 手動測試：`GET /resizing/640/80/2026-03-05/iphone-1_xxx.jpg`，確認回傳 WebP 且尺寸正確
-- [ ] 5.4 驗證 L1 快取：連續兩次請求，第二次回應 header 應含 `CF-Cache-Status: HIT`
-- [ ] 5.5 驗證 L2 快取：確認 R2 `thumbnails/640w_80q/` 資料夾出現對應 webp 檔案
+- [x] 5.1 執行 `wrangler deploy --config wrangler.image-service.toml` 部署 image-service Worker
+- [x] 5.2 設定 Wrangler secret：`wrangler secret put R2_PUBLIC_URL --config wrangler.image-service.toml`（若未放 vars）
+- [x] 5.3 手動測試：`GET /resizing/640/80/2026-03-05/iphone-2_1772682021956.jpg`，確認回傳 JPEG（改為 lossy JPEG 輸出）且尺寸正確
+- [x] 5.4 驗證 L1 快取：連續兩次請求，第二次回應 header 含 `CF-Cache-Status: HIT`
+- [x] 5.5 驗證 L2 快取：確認 R2 `thumbnails/640w_80q/` 資料夾出現對應 .jpg 檔案
 
 ## 6. 前端：監控頁更新
 

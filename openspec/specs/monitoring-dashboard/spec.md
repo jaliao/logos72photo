@@ -16,8 +16,12 @@
 - **THEN** 看到所有已註冊 iPhone 的卡片，顯示：
   - 裝置名稱/ID
   - 目前電池電量
-  - 最後上傳照片的縮圖
+  - 最後上傳照片的縮圖（SHALL 透過 image-service URL 載入，格式為 `/resizing/640/80/{r2_key}`）
   - 最後一次心跳/拍照時間
+
+#### Scenario: 縮圖 fallback
+- **WHEN** image-service URL 載入失敗
+- **THEN** 監控頁 SHALL 改用原始 R2 URL（`last_photo_url`）顯示，不得顯示破圖
 
 ### Requirement: 拍照成功視覺回饋
 iPhone 在執行拍照動作時，必須提供明顯的視覺訊號。
