@@ -27,12 +27,13 @@ let cachedToken: { value: string; expiresAt: number } | null = null
  *   Node.js Buffer 是 host realm 物件，可跨 VM realm 被 WebCrypto 識別。
  * - Cloudflare Workers：原生提供 Buffer，行為相同。
  */
-function pemToArrayBuffer(pem: string): Buffer {
+function pemToArrayBuffer(pem: string): ArrayBuffer {
   const base64 = pem
     .replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----/g, '')
     .replace(/-----END (?:RSA )?PRIVATE KEY-----/g, '')
     .replace(/\s/g, '')
-  return Buffer.from(base64, 'base64')
+  const buf = Buffer.from(base64, 'base64')
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer
 }
 
 /** Base64URL 編碼（不含 padding） */
