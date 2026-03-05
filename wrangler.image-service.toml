@@ -1,0 +1,20 @@
+# Cloudflare Workers Image Service 配置
+# 2026-03-05
+#
+# 部署方式：
+#   wrangler deploy --config wrangler.image-service.toml
+#
+# 機密設定（部署後執行）：
+#   wrangler secret put R2_PUBLIC_URL --config wrangler.image-service.toml
+
+name = "logos72photo-image"
+main = "workers/image-service.ts"
+compatibility_date = "2024-01-01"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "logos72photo"
+
+[vars]
+WATERMARK_ENABLED = "true"
+# R2_PUBLIC_URL 透過 wrangler secret put 設定（例如 https://pub-xxx.r2.dev）

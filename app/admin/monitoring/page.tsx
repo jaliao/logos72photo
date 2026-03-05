@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 中央監控儀表板（/admin/monitoring）
- * 2026-02-21 (Updated: 2026-02-21)
+ * 2026-02-21 (Updated: 2026-03-05)
  * app/admin/monitoring/page.tsx
  * ----------------------------------------------
  */
@@ -10,13 +10,25 @@
 
 export const runtime = 'edge'
 
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { ThumbnailImage } from '@/components/ThumbnailImage'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { HEARTBEAT_INTERVAL_MS, OFFLINE_THRESHOLD_MS } from '@/lib/constants'
 import { logoutAction } from '@/app/admin/login/actions'
 import type { DeviceDoc } from '@/lib/types'
+
+/** 從 R2 URL 建構 image-service 縮圖 URL */
+function toThumbUrl(r2Url: string, width: number, quality: number): string {
+  const imageServiceUrl = process.env.NEXT_PUBLIC_IMAGE_SERVICE_URL?.replace(/\/$/, '') ?? ''
+  if (!imageServiceUrl) return r2Url
+  try {
+    const r2Key = new URL(r2Url).pathname.slice(1) // 去掉開頭 /
+    return `${imageServiceUrl}/resizing/${width}/${quality}/${r2Key}`
+  } catch {
+    return r2Url
+  }
+}
 
 // 電量顯示
 function BatteryBar({ level }: { level: number | null }) {
@@ -136,14 +148,13 @@ export default function MonitoringPage() {
                     <BatteryBar level={device.battery_level} />
                   </div>
 
-                  {/* 最新照片縮圖 */}
+                  {/* 最新照片縮圖（透過 image-service 載入 WebP 縮圖，失敗時 fallback 至原圖） */}
                   {device.last_photo_url ? (
                     <div className="mb-4 overflow-hidden rounded-xl">
-                      <Image
-                        src={device.last_photo_url}
+                      <ThumbnailImage
+                        src={toThumbUrl(device.last_photo_url, 640, 80)}
+                        fallbackSrc={device.last_photo_url}
                         alt={`${device.device_id} 最新照片`}
-                        width={600}
-                        height={400}
                         className="h-48 w-full object-cover"
                       />
                     </div>

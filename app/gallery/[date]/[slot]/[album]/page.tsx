@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 1 小時相簿照片預覽與下載頁
- * 2026-02-21
+ * 2026-02-21 (Updated: 2026-03-05)
  * app/gallery/[date]/[slot]/[album]/page.tsx
  * ----------------------------------------------
  */
@@ -11,9 +11,21 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m, type PhotoDoc } from '@/lib/types'
+import { ThumbnailImage } from '@/components/ThumbnailImage'
+
+/** 從 R2 URL 建構 image-service 縮圖 URL */
+function toThumbUrl(r2Url: string, width: number, quality: number): string {
+  const imageServiceUrl = process.env.NEXT_PUBLIC_IMAGE_SERVICE_URL?.replace(/\/$/, '') ?? ''
+  if (!imageServiceUrl) return r2Url
+  try {
+    const r2Key = new URL(r2Url).pathname.slice(1)
+    return `${imageServiceUrl}/resizing/${width}/${quality}/${r2Key}`
+  } catch {
+    return r2Url
+  }
+}
 
 interface Params {
   params: Promise<{ date: string; slot: string; album: string }>
@@ -80,11 +92,11 @@ export default async function AlbumPage({ params }: Params) {
                 key={photo.r2_url}
                 className="group relative overflow-hidden rounded-xl bg-zinc-200"
               >
-                <Image
-                  src={photo.r2_url}
+                {/* 格狀縮圖：透過 image-service 載入 WebP，下載仍使用原圖 r2_url */}
+                <ThumbnailImage
+                  src={toThumbUrl(photo.r2_url, 640, 80)}
+                  fallbackSrc={photo.r2_url}
                   alt={`${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`}
-                  width={400}
-                  height={300}
                   className="h-40 w-full object-cover transition group-hover:opacity-80"
                 />
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/50 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
