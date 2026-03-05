@@ -17,6 +17,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { ref, onValue } from 'firebase/database'
 import { getRtdb } from '@/lib/firebase-rtdb'
 import { HEARTBEAT_INTERVAL_MS } from '@/lib/constants'
+import { logError } from '@/lib/log-error'
 
 // 格式化時間為「上午/下午 H:MM:SS」（12 時制）
 function formatTime12(date: Date): string {
@@ -32,19 +33,6 @@ function formatTime12(date: Date): string {
 function formatTime(ts: number | null): string {
   if (!ts) return '—'
   return formatTime12(new Date(ts))
-}
-
-// 將錯誤傳送至 /api/log-error（fire-and-forget，不影響主流程）
-async function logError(deviceId: string, source: string, message: string): Promise<void> {
-  try {
-    await fetch('/api/log-error', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: deviceId, source, message }),
-    })
-  } catch {
-    // 靜默失敗
-  }
 }
 
 // PWA standalone 模式偵測（非 standalone → 顯示安裝引導，防止重複加入）

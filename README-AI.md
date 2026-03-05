@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.15
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.17
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.15 新增獨立 Image Service Worker，提供 resize、WebP 轉換、浮水印與兩層快取機制。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.17 新增錯誤日誌機制（Firestore `error_logs` + TTL 7 天 + 後台查閱頁面），並修復所有 catch 靜默吞錯的問題。
 
 ---
 
@@ -57,6 +57,14 @@ Image Service Worker (logos72photo-image)
 
 ## 4. 核心資料模型 (Data Schema)
 
+**Firestore `error_logs/{docId}`**
+- `device_id`: string（裝置 ID 或 'unknown'）
+- `source`: string（例：`camera:blob`、`camera:upload`、`api:upload`）
+- `message`: string
+- `timestamp`: number（Unix ms）
+- `date`: string（YYYY-MM-DD 台灣時間，供查詢過濾）
+- `expires_at`: string（ISO 字串，7 天後 Firestore TTL 自動刪除）
+
 **Firestore `devices/{deviceId}`**
 - `device_id`: string
 - `battery_level`: number | null（0-1）
@@ -88,6 +96,7 @@ Image Service Worker (logos72photo-image)
 
 ## 5. 關鍵業務邏輯 (Business Logic)
 
+- **錯誤日誌**（v0.1.17 新增）：CameraClient 三個 catch 點補 `logError`（fire-and-forget 呼叫 `/api/log-error`）；`/api/upload` catch 直接 Admin SDK 寫入；後台 `/admin/errors` 依台灣時間日期查詢，TTL 7 天自動清除；Firestore TTL policy 需在 Console 手動設定 `expires_at` 欄位
 - **Image Service**（v0.1.15 新增）：獨立 Cloudflare Worker，路由 `/resizing/{width}/{quality}/{r2_key}`；`@cf-wasm/photon` WASM 處理；兩層快取（Cache API + R2）；失敗 302 降級；`WATERMARK_ENABLED` 控制浮水印；前端 `ThumbnailImage` 元件含 onError fallback
 - **本地定時拍照**（v0.1.14）：cron（`4-59/5 * * * *`）於每 5 分鐘週期的第 4 分觸發；裝置倒數 **10 秒**後拍照
 - **時間同步**（v0.1.13）：RTDB `sync/server_time` 每 10 分鐘由伺服器寫入；裝置顯示時差於狀態列
@@ -108,11 +117,10 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.15**（本次）— cr-spec-260305-001：Image Service Worker 建立（resize + WebP + 浮水印 + 兩層快取）；前端監控頁與相簿改用縮圖 URL
+- **v0.1.17**（本次）— cr-spec-260304-014：錯誤日誌機制全面建立；CameraClient/upload API catch 點修復；後台 `/admin/errors` 查閱頁面
 - **待手動執行**：
-  1. `wrangler deploy --config wrangler.image-service.toml` 部署 Image Service
-  2. `wrangler secret put R2_PUBLIC_URL --config wrangler.image-service.toml`
-  3. 設定環境變數 `NEXT_PUBLIC_IMAGE_SERVICE_URL` 至 Cloudflare Pages
-  4. 準備並上傳 `assets/watermark.png` 至 R2（若需浮水印）
+  1. Firestore Console → `error_logs` 集合設定 TTL policy，欄位指向 `expires_at`
+- **v0.1.16** — cr-fix-260305-001：修正 `pemToArrayBuffer` 返回 `ArrayBuffer`，修復 Cloudflare Pages 建置失敗
+- **v0.1.15** — cr-spec-260305-001：Image Service Worker 建立（resize + WebP + 浮水印 + 兩層快取）；前端監控頁與相簿改用縮圖 URL
 - **v0.1.14** — cr-spec-260304-015：拍照時間優化，倒數 15s→10s；cron 觸發提早 60 秒
 - **v0.1.13** — cr-spec-260304-010：拍照機制改為本地定時觸發，RTDB 降級為時間同步
