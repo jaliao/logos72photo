@@ -48,8 +48,9 @@ export default function GalleryDateList({ dateList }: Props) {
         {dateList.map(({ date, slots }, index) => (
           <div
             key={date}
-            className="rounded-2xl bg-white p-5 shadow-sm"
+            className="rounded-2xl bg-white/50 p-5"
             style={{
+              boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
               animation: exiting
                 ? 'fadeOut 300ms ease-in forwards'
                 : `fadeIn 400ms ease-out ${index * 80}ms forwards`,
@@ -74,7 +75,7 @@ export default function GalleryDateList({ dateList }: Props) {
                     className={[
                       'flex flex-col items-center justify-center rounded-xl py-4 transition active:scale-95 cursor-pointer select-none',
                       hasPhotos
-                        ? 'bg-zinc-800 text-white hover:bg-zinc-700'
+                        ? 'bg-zinc-800/50 text-white hover:bg-zinc-700/60'
                         : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200',
                     ].join(' ')}
                   >

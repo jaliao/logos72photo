@@ -28,7 +28,7 @@ export default async function HomePage() {
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-lg">
         {/* 標題 */}
-        <h1 className="mb-1 text-2xl font-bold text-zinc-900">
+        <h1 className="mb-1 text-2xl font-bold text-zinc-900" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
           不間斷讀經接力相簿
         </h1>
         <p className="mb-8 text-sm text-zinc-700">從白天到黑夜不停的運行</p>
