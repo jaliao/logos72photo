@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.18
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.19
 
 ---
 
@@ -96,6 +96,7 @@ Image Service Worker (logos72photo-image)
 
 ## 5. 關鍵業務邏輯 (Business Logic)
 
+- **相簿首頁卡片動畫**（v0.1.19 新增）：`GalleryDateList` Client Component；進場 staggered fadeIn（80ms × index，400ms）；退場 fadeOut（300ms）後 `router.push()`；exiting guard 防重複觸發
 - **相簿首頁動態背景**（v0.1.18 新增）：`GalleryBackground` Client Component；隨機選取 `/bg/1–10.png`；白晝↔黑夜 CSS `@keyframes dayNightCycle`（5 keyframe × 2s，opacity 0.7，右上暖色/左下深色，10s 無限循環）
 - **錯誤日誌**（v0.1.17 新增）：CameraClient 三個 catch 點補 `logError`（fire-and-forget 呼叫 `/api/log-error`）；`/api/upload` catch 直接 Admin SDK 寫入；後台 `/admin/errors` 依台灣時間日期查詢，TTL 7 天自動清除；Firestore TTL policy 需在 Console 手動設定 `expires_at` 欄位
 - **Image Service**（v0.1.15 新增）：獨立 Cloudflare Worker，路由 `/resizing/{width}/{quality}/{r2_key}`；`@cf-wasm/photon` WASM 處理；兩層快取（Cache API + R2）；失敗 302 降級；`WATERMARK_ENABLED` 控制浮水印；前端 `ThumbnailImage` 元件含 onError fallback
@@ -118,7 +119,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.18**（本次）— cr-spec-260305-002：相簿首頁白晝↔黑夜動態漸層背景 + 隨機背景圖
+- **v0.1.19**（本次）— cr-spec-260305-003：相簿首頁日期卡片進場淡入（staggered）+ 退場淡出（點擊攔截）動畫
+- **v0.1.18** — cr-spec-260305-002：相簿首頁白晝↔黑夜動態漸層背景 + 隨機背景圖
 - **v0.1.17** — cr-spec-260304-014：錯誤日誌機制全面建立；CameraClient/upload API catch 點修復；後台 `/admin/errors` 查閱頁面
 - **待手動執行**：
   1. Firestore Console → `error_logs` 集合設定 TTL policy，欄位指向 `expires_at`

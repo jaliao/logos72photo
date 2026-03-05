@@ -9,16 +9,9 @@
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
-import Link from 'next/link'
 import { queryDatesWithSlots } from '@/lib/firebase-rest'
 import GalleryBackground from '@/app/components/GalleryBackground'
-
-// 時段定義
-const SLOTS = [
-  { label: '早', sublabel: '00–08', value: 0 },
-  { label: '中', sublabel: '08–16', value: 8 },
-  { label: '晚', sublabel: '16–24', value: 16 },
-] as const
+import GalleryDateList from '@/app/components/GalleryDateList'
 
 export default async function HomePage() {
   let dateList: Array<{ date: string; slots: Set<0 | 8 | 16> }> = []
@@ -52,42 +45,8 @@ export default async function HomePage() {
           <p className="text-center text-sm text-zinc-400">尚無拍攝紀錄</p>
         )}
 
-        {/* 日期卡片列表 */}
-        <div className="flex flex-col gap-4">
-          {dateList.map(({ date, slots }) => (
-            <div
-              key={date}
-              className="rounded-2xl bg-white p-5 shadow-sm"
-            >
-              {/* 日期標題 */}
-              <p className="mb-3 text-sm font-semibold text-zinc-800">{date}</p>
-
-              {/* 三時段格 */}
-              <div className="grid grid-cols-3 gap-2">
-                {SLOTS.map((slot) => {
-                  const hasPhotos = slots.has(slot.value)
-                  return (
-                    <Link
-                      key={slot.value}
-                      href={`/gallery/${date}/${slot.value}`}
-                      className={[
-                        'flex flex-col items-center justify-center rounded-xl py-4 transition active:scale-95',
-                        hasPhotos
-                          ? 'bg-zinc-800 text-white hover:bg-zinc-700'
-                          : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200',
-                      ].join(' ')}
-                    >
-                      <span className="text-sm font-semibold">{slot.label}</span>
-                      <span className={['text-xs', hasPhotos ? 'text-zinc-400' : 'text-zinc-300'].join(' ')}>
-                        {slot.sublabel}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* 日期卡片列表（含進退場動畫） */}
+        <GalleryDateList dateList={dateList} />
       </div>
     </main>
   )
