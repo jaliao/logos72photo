@@ -1,6 +1,6 @@
 ## 1. Firebase RTDB 設定
 
-- [ ] 1.1 更新 Firebase RTDB Security Rules：新增 `sync/server_time` 節點可匿名讀取（`.read: true`）
+- [x] 1.1 更新 Firebase RTDB Security Rules：新增 `sync/server_time` 節點可匿名讀取（`.read: true`）
 - [x] 1.2 確認 `trigger/last_shot` 舊節點仍保留（不刪除，供 rollback 使用）
 
 ## 2. 伺服器端 API 更新
@@ -13,7 +13,7 @@
 
 - [x] 3.1 在 `app/camera/CameraClient.tsx` 中移除監聽 `trigger/last_shot` 的 RTDB listener（`onValue` / `ref` 相關邏輯）
 - [x] 3.2 移除與舊觸發相關的狀態變數（如 `lastTriggerTs`、`initialTriggerRef` 等）
-- [ ] 3.3 確認移除後頁面無 console error，相機串流正常啟動
+- [x] 3.3 確認移除後頁面無 console error，相機串流正常啟動
 
 ## 4. 實作本地定時拍照
 

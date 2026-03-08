@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "trigger": {
+      "last_shot": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "sync": {
+      "server_time": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

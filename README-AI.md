@@ -6,7 +6,7 @@
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.22 引入 photo_index 反正規化索引，首頁讀取從 O(photos) 降至 O(dates)，大幅降低 Firestore 讀取配額消耗。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.23 新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫），並確認 cr-spec-260304-010 移除舊 RTDB 觸發監聽後相機串流正常。
 
 ---
 
@@ -122,7 +122,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.22**（本次）— cr-spec-260305-006：photo_index 反正規化索引，Firestore 讀取優化（首頁 reads O(photos)→O(dates)）
+- **v0.1.23**（本次）— cr-spec-260304-010（續）：新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫）；確認移除舊 RTDB 觸發後相機串流正常（tasks 1.1 + 3.3）
+- **v0.1.22** — cr-spec-260305-006：photo_index 反正規化索引，Firestore 讀取優化（首頁 reads O(photos)→O(dates)）
 - **v0.1.21** — cr-spec-260305-005：相簿子頁面視覺統一（GalleryBackground + 標題 text-shadow + 卡片半透明）
 - **v0.1.20** — cr-spec-260305-004：相簿首頁 Glassmorphism（日期卡片 + 時段格半透明、標題 text-shadow）
 - **v0.1.19** — cr-spec-260305-003：相簿首頁日期卡片進場淡入（staggered）+ 退場淡出（點擊攔截）動畫
