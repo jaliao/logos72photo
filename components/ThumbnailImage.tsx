@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface ThumbnailImageProps {
   /** image-service 縮圖 URL */
@@ -26,6 +26,11 @@ interface ThumbnailImageProps {
  */
 export function ThumbnailImage({ src, fallbackSrc, alt, className }: ThumbnailImageProps) {
   const [imgSrc, setImgSrc] = useState(src)
+
+  // src prop 變更時（例如 Firestore onSnapshot 更新最新照片 URL）重設為新 src
+  useEffect(() => {
+    setImgSrc(src)
+  }, [src])
 
   return (
     // eslint-disable-next-line @next/next/no-img-element

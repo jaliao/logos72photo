@@ -57,7 +57,8 @@ export type Slot8h = 0 | 8 | 16
 
 /** 從 timestamp 計算 slot_8h */
 export function getSlot8h(date: Date): Slot8h {
-  const hour = date.getHours()
+  // 使用 getUTCHours()：傳入的 date 為 new Date(timestamp + TW_OFFSET_MS)，UTC 時間即台灣時間
+  const hour = date.getUTCHours()
   if (hour < 8) return 0
   if (hour < 16) return 8
   return 16
@@ -65,7 +66,8 @@ export function getSlot8h(date: Date): Slot8h {
 
 /** 從 timestamp 計算 slot_15m（當日分鐘數，對齊到 15 分鐘） */
 export function getSlot15m(date: Date): number {
-  const totalMinutes = date.getHours() * 60 + date.getMinutes()
+  // 使用 getUTCHours/Minutes()：傳入的 date 為 new Date(timestamp + TW_OFFSET_MS)，UTC 時間即台灣時間
+  const totalMinutes = date.getUTCHours() * 60 + date.getUTCMinutes()
   return Math.floor(totalMinutes / 15) * 15
 }
 

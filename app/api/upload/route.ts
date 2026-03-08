@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     // 更新反正規化索引（fire-and-forget，失敗不影響上傳結果）
     const slot8h = getSlot8h(taiwanNow)
-    const hourMin = taiwanNow.getHours() * 60
+    const hourMin = taiwanNow.getUTCHours() * 60
     updatePhotoIndex(dateStr, slot8h, hourMin).catch((err) => {
       console.error('updatePhotoIndex 失敗：', err instanceof Error ? err.message : String(err))
     })
