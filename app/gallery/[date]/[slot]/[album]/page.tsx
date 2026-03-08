@@ -13,8 +13,8 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m, type PhotoDoc } from '@/lib/types'
-import { ThumbnailImage } from '@/components/ThumbnailImage'
 import GalleryBackground from '@/app/components/GalleryBackground'
+import PhotoLightbox, { type LightboxPhoto } from '@/app/components/PhotoLightbox'
 
 /** 從 R2 URL 建構 image-service 縮圖 URL */
 function toThumbUrl(r2Url: string, width: number, quality: number): string {
@@ -63,6 +63,13 @@ export default async function AlbumPage({ params }: Params) {
 
   const hourLabel = `${formatSlot15m(hourMin)} – ${formatSlot15m(hourMin + 60)}`
 
+  // 準備 Lightbox 用的照片資料（Server Component 序列化為 props）
+  const lightboxPhotos: LightboxPhoto[] = photos.map((photo) => ({
+    r2Url: photo.r2_url,
+    thumbUrl: toThumbUrl(photo.r2_url, 1280, 85),
+    alt: `${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`,
+  }))
+
   return (
     <main className="relative min-h-screen px-4 py-8">
       <style>{`
@@ -84,9 +91,9 @@ export default async function AlbumPage({ params }: Params) {
           className="mb-1 mt-4 text-2xl font-bold text-zinc-900"
           style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
         >
-          {date} · {hourLabel}
+          不間斷讀經接力相簿
         </h1>
-        <p className="mb-6 text-sm text-zinc-700">{photos.length} 張照片</p>
+        <p className="mb-6 text-sm text-zinc-700">{date} · {hourLabel}　{photos.length} 張照片</p>
 
         {error && (
           <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -105,33 +112,8 @@ export default async function AlbumPage({ params }: Params) {
               opacity: 0,
             }}
           >
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {photos.map((photo) => (
-              <div
-                key={photo.r2_url}
-                className="group relative overflow-hidden rounded-xl bg-zinc-200"
-              >
-                {/* 格狀縮圖：透過 image-service 載入 WebP，下載仍使用原圖 r2_url */}
-                <ThumbnailImage
-                  src={toThumbUrl(photo.r2_url, 640, 80)}
-                  fallbackSrc={photo.r2_url}
-                  alt={`${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`}
-                  className="h-40 w-full object-cover transition group-hover:opacity-80"
-                />
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/50 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
-                  <span>{photo.device_id}</span>
-                  {/* 下載按鈕 */}
-                  <a
-                    href={photo.r2_url}
-                    download
-                    className="rounded bg-white/20 px-2 py-0.5 hover:bg-white/40"
-                  >
-                    下載
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+            {/* PhotoLightbox 包含縮圖 grid 與全螢幕預覽（Client Component）*/}
+            <PhotoLightbox photos={lightboxPhotos} />
           </div>
         )}
       </div>

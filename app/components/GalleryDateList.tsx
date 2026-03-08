@@ -50,7 +50,7 @@ export default function GalleryDateList({ dateList }: Props) {
             key={date}
             className="rounded-2xl bg-white/50 p-5"
             style={{
-              boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.85)',
               animation: exiting
                 ? 'fadeOut 300ms ease-in forwards'
                 : `fadeIn 400ms ease-out ${index * 80}ms forwards`,
