@@ -10,7 +10,7 @@ export const runtime = 'edge'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToR2 } from '@/lib/r2'
-import { addDoc } from '@/lib/firebase-rest'
+import { addDoc, updatePhotoIndex } from '@/lib/firebase-rest'
 import { getSlot8h, getSlot15m, type PhotoDoc } from '@/lib/types'
 
 const TW_OFFSET_MS = 8 * 60 * 60 * 1000
@@ -68,6 +68,13 @@ export async function POST(req: NextRequest) {
       slot_15m: getSlot15m(taiwanNow), // 台灣 15 分鐘子相簿
     }
     await addDoc('photos', photoDoc as unknown as Record<string, unknown>)
+
+    // 更新反正規化索引（fire-and-forget，失敗不影響上傳結果）
+    const slot8h = getSlot8h(taiwanNow)
+    const hourMin = taiwanNow.getHours() * 60
+    updatePhotoIndex(dateStr, slot8h, hourMin).catch((err) => {
+      console.error('updatePhotoIndex 失敗：', err instanceof Error ? err.message : String(err))
+    })
 
     return NextResponse.json({ ok: true, url: r2Url })
   } catch (err) {

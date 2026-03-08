@@ -446,6 +446,128 @@ export async function queryDatesWithSlots(): Promise<
     .map(([date, slots]) => ({ date, slots }))
 }
 
+// ─── photo_index 反正規化索引 ──────────────────────────────────────────────
+
+/** photo_index 文件結構 */
+export interface PhotoIndexDoc {
+  slots: number[]
+  hours: Record<string, number[]>
+}
+
+/**
+ * 讀取 photo_index/{date} 單一文件，取得該日期的小時索引 map。
+ * 文件不存在時回傳空物件，不拋出例外。
+ */
+export async function getPhotoIndexByDate(date: string): Promise<Record<string, number[]>> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/photo_index/${date}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+
+  if (res.status === 404) return {}
+  if (!res.ok) {
+    throw new Error(`Firestore getPhotoIndexByDate 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const data = (await res.json()) as { fields?: Record<string, unknown> }
+  if (!data.fields) return {}
+
+  const parsed = parseFirestoreFields(data.fields) as PhotoIndexDoc
+  return (parsed.hours as Record<string, number[]>) ?? {}
+}
+
+/**
+ * 讀取 photo_index 集合所有文件，回傳與 queryDatesWithSlots 相同介面。
+ * 用於首頁，讀取量為 O(日期數) 而非 O(照片數)。
+ */
+export async function queryPhotoIndex(): Promise<
+  Array<{ date: string; slots: Set<0 | 8 | 16> }>
+> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/photo_index`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore queryPhotoIndex 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const data = (await res.json()) as {
+    documents?: Array<{ name: string; fields: Record<string, unknown> }>
+  }
+  if (!data.documents) return []
+
+  return data.documents
+    .map((doc) => {
+      // document name 末段為 date（YYYY-MM-DD）
+      const date = doc.name.split('/').pop() ?? ''
+      const parsed = parseFirestoreFields(doc.fields) as PhotoIndexDoc
+      const slots = new Set<0 | 8 | 16>((parsed.slots ?? []) as Array<0 | 8 | 16>)
+      return { date, slots }
+    })
+    .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * 更新 photo_index/{date} 文件，合併新的 slot_8h 與 hourMin。
+ * 若文件不存在則建立；使用記憶體 Set 去重後整體 PATCH。
+ */
+export async function updatePhotoIndex(
+  date: string,
+  slot8h: 0 | 8 | 16,
+  hourMin: number,
+): Promise<void> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/photo_index/${date}`
+
+  // 讀取現有文件（不存在則用空結構）
+  const getRes = await fetch(baseUrl, { headers: { Authorization: `Bearer ${token}` } })
+  let existing: PhotoIndexDoc = { slots: [], hours: {} }
+  if (getRes.ok) {
+    const data = (await getRes.json()) as { fields?: Record<string, unknown> }
+    if (data.fields) {
+      existing = parseFirestoreFields(data.fields) as PhotoIndexDoc
+      existing.slots = existing.slots ?? []
+      existing.hours = (existing.hours as Record<string, number[]>) ?? {}
+    }
+  }
+
+  // 記憶體合併（Set 去重）
+  const slotsSet = new Set<number>(existing.slots)
+  slotsSet.add(slot8h)
+
+  const slotKey = String(slot8h)
+  const hoursSet = new Set<number>(existing.hours[slotKey] ?? [])
+  hoursSet.add(hourMin)
+
+  const updated: PhotoIndexDoc = {
+    slots: Array.from(slotsSet),
+    hours: { ...existing.hours, [slotKey]: Array.from(hoursSet) },
+  }
+
+  // PATCH 完整覆寫（updateMask 包含 slots + hours）
+  const fields = toFirestoreFields(updated as unknown as Record<string, unknown>)
+  const patchRes = await fetch(
+    `${baseUrl}?updateMask.fieldPaths=slots&updateMask.fieldPaths=hours`,
+    {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields }),
+    },
+  )
+
+  if (!patchRes.ok) {
+    throw new Error(`Firestore updatePhotoIndex 失敗：${patchRes.status} ${await patchRes.text()}`)
+  }
+}
+
 /**
  * RTDB REST：寫入節點（PUT 完整覆寫）
  * @param path  節點路徑，例如 "trigger/last_shot"

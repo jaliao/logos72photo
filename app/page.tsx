@@ -9,7 +9,7 @@
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
-import { queryDatesWithSlots } from '@/lib/firebase-rest'
+import { queryPhotoIndex } from '@/lib/firebase-rest'
 import GalleryBackground from '@/app/components/GalleryBackground'
 import GalleryDateList from '@/app/components/GalleryDateList'
 
@@ -18,7 +18,7 @@ export default async function HomePage() {
   let error: string | null = null
 
   try {
-    dateList = await queryDatesWithSlots()
+    dateList = await queryPhotoIndex()
   } catch (err) {
     error = err instanceof Error ? err.message : String(err)
   }

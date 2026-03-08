@@ -6,7 +6,7 @@
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.21 相簿子頁面（時段列表、照片預覽）視覺統一為首頁 Glassmorphism 風格（動態背景 + 標題 text-shadow + 卡片半透明）。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.22 引入 photo_index 反正規化索引，首頁讀取從 O(photos) 降至 O(dates)，大幅降低 Firestore 讀取配額消耗。
 
 ---
 
@@ -96,6 +96,7 @@ Image Service Worker (logos72photo-image)
 
 ## 5. 關鍵業務邏輯 (Business Logic)
 
+- **photo_index 反正規化索引**（v0.1.22 新增）：`photo_index/{date}` 集合儲存 slots + hours；上傳後 fire-and-forget 更新索引；首頁改呼叫 `queryPhotoIndex()`；slot 頁改呼叫 `getPhotoIndexByDate()`（1 read/次）；首頁讀取從最多 2000 reads 降至 ≤30
 - **相簿子頁面視覺統一**（v0.1.21 新增）：時段列表頁（slot）與照片預覽頁（album）加入 `GalleryBackground`；標題加 `textShadow`；slot 頁小時卡片套用 `bg-zinc-800/50`；返回連結改為 `text-white/70`
 - **相簿首頁 Glassmorphism**（v0.1.20 新增）：日期卡片 `bg-white/50` + 深色 box-shadow；有照片時段格 `bg-zinc-800/50`；無照片時段格維持 `bg-zinc-100`（不透明）；首頁 `<h1>` 加 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
 - **相簿首頁卡片動畫**（v0.1.19 新增）：`GalleryDateList` Client Component；進場 staggered fadeIn（80ms × index，400ms）；退場 fadeOut（300ms）後 `router.push()`；exiting guard 防重複觸發
@@ -121,7 +122,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.21**（本次）— cr-spec-260305-005：相簿子頁面視覺統一（GalleryBackground + 標題 text-shadow + 卡片半透明）
+- **v0.1.22**（本次）— cr-spec-260305-006：photo_index 反正規化索引，Firestore 讀取優化（首頁 reads O(photos)→O(dates)）
+- **v0.1.21** — cr-spec-260305-005：相簿子頁面視覺統一（GalleryBackground + 標題 text-shadow + 卡片半透明）
 - **v0.1.20** — cr-spec-260305-004：相簿首頁 Glassmorphism（日期卡片 + 時段格半透明、標題 text-shadow）
 - **v0.1.19** — cr-spec-260305-003：相簿首頁日期卡片進場淡入（staggered）+ 退場淡出（點擊攔截）動畫
 - **v0.1.18** — cr-spec-260305-002：相簿首頁白晝↔黑夜動態漸層背景 + 隨機背景圖
