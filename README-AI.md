@@ -6,7 +6,7 @@
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.23 新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫），並確認 cr-spec-260304-010 移除舊 RTDB 觸發監聽後相機串流正常。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.24 相簿子頁面視覺全面對齊首頁：時段列表頁與照片預覽頁加入 glassmorphism 卡片容器（`bg-white/50` + `boxShadow`）、進場 fadeIn 動畫、h1 排版統一（`text-2xl text-zinc-900`）。
 
 ---
 
@@ -97,6 +97,7 @@ Image Service Worker (logos72photo-image)
 ## 5. 關鍵業務邏輯 (Business Logic)
 
 - **photo_index 反正規化索引**（v0.1.22 新增）：`photo_index/{date}` 集合儲存 slots + hours；上傳後 fire-and-forget 更新索引；首頁改呼叫 `queryPhotoIndex()`；slot 頁改呼叫 `getPhotoIndexByDate()`（1 read/次）；首頁讀取從最多 2000 reads 降至 ≤30
+- **相簿子頁面視覺全面對齊**（v0.1.24 新增）：時段列表頁小時格 grid 與照片預覽頁照片 grid 外包 glassmorphism 卡片（`rounded-2xl bg-white/50 p-5 + boxShadow: 0 4px 20px rgba(0,0,0,0.7)`）；進場 fadeIn 300ms；h1 統一為 `text-2xl text-zinc-900`；subtitle 統一為 `text-zinc-700`
 - **相簿子頁面視覺統一**（v0.1.21 新增）：時段列表頁（slot）與照片預覽頁（album）加入 `GalleryBackground`；標題加 `textShadow`；slot 頁小時卡片套用 `bg-zinc-800/50`；返回連結改為 `text-white/70`
 - **相簿首頁 Glassmorphism**（v0.1.20 新增）：日期卡片 `bg-white/50` + 深色 box-shadow；有照片時段格 `bg-zinc-800/50`；無照片時段格維持 `bg-zinc-100`（不透明）；首頁 `<h1>` 加 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
 - **相簿首頁卡片動畫**（v0.1.19 新增）：`GalleryDateList` Client Component；進場 staggered fadeIn（80ms × index，400ms）；退場 fadeOut（300ms）後 `router.push()`；exiting guard 防重複觸發
@@ -122,7 +123,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.23**（本次）— cr-spec-260304-010（續）：新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫）；確認移除舊 RTDB 觸發後相機串流正常（tasks 1.1 + 3.3）
+- **v0.1.24**（本次）— cr-spec-260305-007：相簿子頁面全面對齊首頁視覺（glassmorphism 卡片 + fadeIn + h1 排版統一）
+- **v0.1.23** — cr-spec-260304-010（續）：新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫）；確認移除舊 RTDB 觸發後相機串流正常（tasks 1.1 + 3.3）
 - **v0.1.22** — cr-spec-260305-006：photo_index 反正規化索引，Firestore 讀取優化（首頁 reads O(photos)→O(dates)）
 - **v0.1.21** — cr-spec-260305-005：相簿子頁面視覺統一（GalleryBackground + 標題 text-shadow + 卡片半透明）
 - **v0.1.20** — cr-spec-260305-004：相簿首頁 Glassmorphism（日期卡片 + 時段格半透明、標題 text-shadow）

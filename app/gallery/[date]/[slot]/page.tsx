@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 1 小時子相簿列表頁（依 8 小時時段）
- * 2026-02-21 (Updated: 2026-03-05)
+ * 2026-02-21 (Updated: 2026-03-08)
  * app/gallery/[date]/[slot]/page.tsx
  * ----------------------------------------------
  */
@@ -52,6 +52,12 @@ export default async function SlotPage({ params }: Params) {
 
   return (
     <main className="relative min-h-screen px-4 py-8">
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-lg">
         <Link href="/" className="text-sm text-white/70 hover:text-white">
@@ -59,12 +65,12 @@ export default async function SlotPage({ params }: Params) {
         </Link>
 
         <h1
-          className="mb-1 mt-4 text-xl font-bold text-zinc-800"
+          className="mb-1 mt-4 text-2xl font-bold text-zinc-900"
           style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
         >
           {date}
         </h1>
-        <p className="mb-6 text-sm text-zinc-600">{slotLabel}</p>
+        <p className="mb-6 text-sm text-zinc-700">{slotLabel}</p>
 
         {error && (
           <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -72,27 +78,36 @@ export default async function SlotPage({ params }: Params) {
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {albums.map((albumMin) => {
-            const hasPhotos = withPhotos.has(albumMin)
-            return (
-              <Link
-                key={albumMin}
-                href={`/gallery/${date}/${slot}/${albumMin}`}
-                className={[
-                  'flex flex-col items-center justify-center rounded-xl p-4 text-sm font-medium transition',
-                  hasPhotos
-                    ? 'bg-zinc-800/50 text-white hover:bg-zinc-700/60'
-                    : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200',
-                ].join(' ')}
-              >
-                {formatSlot15m(albumMin)}
-                {hasPhotos && (
-                  <span className="mt-1 text-xs text-zinc-300">有照片</span>
-                )}
-              </Link>
-            )
-          })}
+        <div
+          className="rounded-2xl bg-white/50 p-5"
+          style={{
+            boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+            animation: 'fadeIn 300ms ease-out forwards',
+            opacity: 0,
+          }}
+        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {albums.map((albumMin) => {
+              const hasPhotos = withPhotos.has(albumMin)
+              return (
+                <Link
+                  key={albumMin}
+                  href={`/gallery/${date}/${slot}/${albumMin}`}
+                  className={[
+                    'flex flex-col items-center justify-center rounded-xl p-4 text-sm font-medium transition',
+                    hasPhotos
+                      ? 'bg-zinc-800/50 text-white hover:bg-zinc-700/60'
+                      : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200',
+                  ].join(' ')}
+                >
+                  {formatSlot15m(albumMin)}
+                  {hasPhotos && (
+                    <span className="mt-1 text-xs text-zinc-300">有照片</span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
         </div>
       </div>
     </main>
