@@ -475,7 +475,7 @@ export async function getPhotoIndexByDate(date: string): Promise<Record<string, 
   const data = (await res.json()) as { fields?: Record<string, unknown> }
   if (!data.fields) return {}
 
-  const parsed = parseFirestoreFields(data.fields) as PhotoIndexDoc
+  const parsed = parseFirestoreFields(data.fields) as unknown as PhotoIndexDoc
   return (parsed.hours as Record<string, number[]>) ?? {}
 }
 
