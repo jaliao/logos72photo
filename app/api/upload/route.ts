@@ -69,12 +69,15 @@ export async function POST(req: NextRequest) {
     }
     await addDoc('photos', photoDoc as unknown as Record<string, unknown>)
 
-    // 更新反正規化索引（fire-and-forget，失敗不影響上傳結果）
+    // 更新反正規化索引（await 確保 Cloudflare Workers edge runtime 不在回應後提前終止）
     const slot8h = getSlot8h(taiwanNow)
     const hourMin = taiwanNow.getUTCHours() * 60
-    updatePhotoIndex(dateStr, slot8h, hourMin).catch((err) => {
+    try {
+      await updatePhotoIndex(dateStr, slot8h, hourMin)
+    } catch (err) {
+      // 索引更新失敗不阻斷上傳，但記錄錯誤
       console.error('updatePhotoIndex 失敗：', err instanceof Error ? err.message : String(err))
-    })
+    }
 
     return NextResponse.json({ ok: true, url: r2Url })
   } catch (err) {
