@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.29
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.30
 
 ---
 
@@ -126,7 +126,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.29**（本次）— cr-spec-260304-012：後台測試資料批次清除（`/api/admin/purge-date` + `/admin/data-cleanup`）
+- **v0.1.30**（本次）— cr-spec-260308-004：相簿返回連結文字陰影（`textShadow: '0 1px 8px rgba(0,0,0,0.4)'`）
+- **v0.1.29** — cr-spec-260304-012：後台測試資料批次清除（`/api/admin/purge-date` + `/admin/data-cleanup`）
 - **v0.1.28** — cr-spec-260308-003：照片預覽頁行動排版最佳化（直式比例 + 手機單欄 + Lightbox 高度調整）
 - **v0.1.27** — cr-spec-260308-002：時段列表頁小時格統一深色 + 照片張數顯示（`photo_index.hourCounts` 欄位）
 - **v0.1.26** — cr-spec-260308-001：首頁日期範圍過濾（`NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數，結束日預設台灣今日）

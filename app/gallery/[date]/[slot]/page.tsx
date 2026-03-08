@@ -59,7 +59,7 @@ export default async function SlotPage({ params }: Params) {
       `}</style>
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-lg">
-        <Link href="/" className="text-sm text-white/70 hover:text-white">
+        <Link href="/" className="text-sm text-white/70 hover:text-white" style={{ textShadow: '0 1px 8px rgba(0,0,0,1)' }}>
           ← 返回
         </Link>
 
