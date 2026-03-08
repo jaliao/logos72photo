@@ -36,12 +36,11 @@ export default async function SlotPage({ params }: Params) {
   const albums = generateSubAlbums(slot8h)
 
   // 讀取 photo_index/{date} 單一文件（1 read），取代掃描 photos 集合
-  let withPhotos = new Set<number>()
+  let hourCounts: Record<string, number> = {}
   let error: string | undefined
   try {
-    const hoursMap = await getPhotoIndexByDate(date)
-    const hours = hoursMap[String(slot8h)] ?? []
-    withPhotos = new Set(hours)
+    const { hourCounts: allCounts } = await getPhotoIndexByDate(date)
+    hourCounts = allCounts[String(slot8h)] ?? {}
   } catch (err) {
     error = err instanceof Error ? err.message : String(err)
     console.error('[SlotPage] getPhotoIndexByDate 失敗：', error)
@@ -88,22 +87,15 @@ export default async function SlotPage({ params }: Params) {
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {albums.map((albumMin) => {
-              const hasPhotos = withPhotos.has(albumMin)
+              const count = hourCounts[String(albumMin)] ?? 0
               return (
                 <Link
                   key={albumMin}
                   href={`/gallery/${date}/${slot}/${albumMin}`}
-                  className={[
-                    'flex flex-col items-center justify-center rounded-xl p-4 text-sm font-medium transition',
-                    hasPhotos
-                      ? 'bg-zinc-800/50 text-white hover:bg-zinc-700/60'
-                      : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200',
-                  ].join(' ')}
+                  className="flex flex-col items-center justify-center rounded-xl bg-zinc-800/50 p-4 text-sm font-medium text-white transition hover:bg-zinc-700/60"
                 >
                   {formatSlot15m(albumMin)}
-                  {hasPhotos && (
-                    <span className="mt-1 text-xs text-zinc-300">有照片</span>
-                  )}
+                  <span className="mt-1 text-xs text-zinc-300">{count} 張</span>
                 </Link>
               )
             })}

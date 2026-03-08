@@ -51,7 +51,7 @@ export default function PhotoLightbox({ photos }: Props) {
   return (
     <>
       {/* 縮圖 Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {photos.map((photo, i) => (
           <div
             key={photo.r2Url}
@@ -62,7 +62,7 @@ export default function PhotoLightbox({ photos }: Props) {
             <img
               src={photo.thumbUrl}
               alt={photo.alt}
-              className="h-40 w-full object-cover transition hover:opacity-80"
+              className="aspect-[3/4] w-full object-cover transition hover:opacity-80"
             />
           </div>
         ))}
@@ -92,7 +92,7 @@ export default function PhotoLightbox({ photos }: Props) {
             <img
               src={current.thumbUrl}
               alt={current.alt}
-              className="max-h-[75vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+              className="max-h-[85vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
             />
 
             {/* 下載工具列 */}

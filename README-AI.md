@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.19
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.28
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.26 相簿首頁日期範圍過濾：以 `NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數限定顯示日期，結束日未設定時預設台灣今日。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.28 照片預覽頁行動排版最佳化：縮圖改 `aspect-[3/4]` 直式比例 + 手機單欄（`grid-cols-1 sm:grid-cols-2`）；Lightbox `max-h-[85vh]` 直式完整顯示。
 
 ---
 
@@ -96,7 +96,9 @@ Image Service Worker (logos72photo-image)
 
 ## 5. 關鍵業務邏輯 (Business Logic)
 
-- **photo_index 反正規化索引**（v0.1.22 新增）：`photo_index/{date}` 集合儲存 slots + hours；上傳後 fire-and-forget 更新索引；首頁改呼叫 `queryPhotoIndex()`；slot 頁改呼叫 `getPhotoIndexByDate()`（1 read/次）；首頁讀取從最多 2000 reads 降至 ≤30
+- **照片預覽頁行動排版最佳化**（v0.1.28 新增）：`PhotoLightbox` 縮圖改 `aspect-[3/4]` 直式比例；手機 `grid-cols-1`、桌面 `sm:grid-cols-2`；Lightbox `max-h-[85vh]` 確保直式照片完整顯示
+- **時段列表頁小時格統一視覺**（v0.1.27 新增）：`photo_index/{date}` 新增 `hourCounts: Record<string, Record<string, number>>` 欄位；`updatePhotoIndex()` 每次上傳遞增對應計數；`getPhotoIndexByDate()` 回傳 `{ hours, hourCounts }`；時段列表頁小時格全改深色（`bg-zinc-800/50`），下方顯示「N 張」
+- **photo_index 反正規化索引**（v0.1.22 新增）：`photo_index/{date}` 集合儲存 slots + hours；上傳後 await 更新索引；首頁改呼叫 `queryPhotoIndex()`；slot 頁改呼叫 `getPhotoIndexByDate()`（1 read/次）；首頁讀取從最多 2000 reads 降至 ≤30
 - **相簿子頁面視覺全面對齊**（v0.1.24 新增）：時段列表頁小時格 grid 與照片預覽頁照片 grid 外包 glassmorphism 卡片（`rounded-2xl bg-white/50 p-5 + boxShadow: 0 4px 20px rgba(0,0,0,0.7)`）；進場 fadeIn 300ms；h1 統一為 `text-2xl text-zinc-900`；subtitle 統一為 `text-zinc-700`
 - **相簿子頁面視覺統一**（v0.1.21 新增）：時段列表頁（slot）與照片預覽頁（album）加入 `GalleryBackground`；標題加 `textShadow`；slot 頁小時卡片套用 `bg-zinc-800/50`；返回連結改為 `text-white/70`
 - **相簿首頁 Glassmorphism**（v0.1.20 新增）：日期卡片 `bg-white/50` + 深色 box-shadow；有照片時段格 `bg-zinc-800/50`；無照片時段格維持 `bg-zinc-100`（不透明）；首頁 `<h1>` 加 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
@@ -123,7 +125,9 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.26**（本次）— cr-spec-260308-001：首頁日期範圍過濾（`NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數，結束日預設台灣今日）
+- **v0.1.28**（本次）— cr-spec-260308-003：照片預覽頁行動排版最佳化（直式比例 + 手機單欄 + Lightbox 高度調整）
+- **v0.1.27** — cr-spec-260308-002：時段列表頁小時格統一深色 + 照片張數顯示（`photo_index.hourCounts` 欄位）
+- **v0.1.26** — cr-spec-260308-001：首頁日期範圍過濾（`NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數，結束日預設台灣今日）
 - **v0.1.25** — cr-feat-260221-011：相簿瀏覽優化（全頁 h1 品牌統一、Lightbox 全螢幕預覽 + 下載、首頁卡片陰影加深）
 - **v0.1.24** — cr-spec-260305-007：相簿子頁面全面對齊首頁視覺（glassmorphism 卡片 + fadeIn + h1 排版統一）
 - **v0.1.23** — cr-spec-260304-010（續）：新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫）；確認移除舊 RTDB 觸發後相機串流正常（tasks 1.1 + 3.3）

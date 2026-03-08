@@ -452,13 +452,16 @@ export async function queryDatesWithSlots(): Promise<
 export interface PhotoIndexDoc {
   slots: number[]
   hours: Record<string, number[]>
+  hourCounts?: Record<string, Record<string, number>>
 }
 
 /**
  * 讀取 photo_index/{date} 單一文件，取得該日期的小時索引 map。
  * 文件不存在時回傳空物件，不拋出例外。
  */
-export async function getPhotoIndexByDate(date: string): Promise<Record<string, number[]>> {
+export async function getPhotoIndexByDate(
+  date: string,
+): Promise<{ hours: Record<string, number[]>; hourCounts: Record<string, Record<string, number>> }> {
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
   const token = await getAccessToken()
 
@@ -467,16 +470,19 @@ export async function getPhotoIndexByDate(date: string): Promise<Record<string, 
     { headers: { Authorization: `Bearer ${token}` } },
   )
 
-  if (res.status === 404) return {}
+  if (res.status === 404) return { hours: {}, hourCounts: {} }
   if (!res.ok) {
     throw new Error(`Firestore getPhotoIndexByDate 失敗：${res.status} ${await res.text()}`)
   }
 
   const data = (await res.json()) as { fields?: Record<string, unknown> }
-  if (!data.fields) return {}
+  if (!data.fields) return { hours: {}, hourCounts: {} }
 
   const parsed = parseFirestoreFields(data.fields) as unknown as PhotoIndexDoc
-  return (parsed.hours as Record<string, number[]>) ?? {}
+  return {
+    hours: (parsed.hours as Record<string, number[]>) ?? {},
+    hourCounts: (parsed.hourCounts as Record<string, Record<string, number>>) ?? {},
+  }
 }
 
 /**
@@ -535,13 +541,14 @@ export async function updatePhotoIndex(
 
   // 讀取現有文件（不存在則用空結構）
   const getRes = await fetch(baseUrl, { headers: { Authorization: `Bearer ${token}` } })
-  let existing: PhotoIndexDoc = { slots: [], hours: {} }
+  let existing: PhotoIndexDoc = { slots: [], hours: {}, hourCounts: {} }
   if (getRes.ok) {
     const data = (await getRes.json()) as { fields?: Record<string, unknown> }
     if (data.fields) {
       existing = parseFirestoreFields(data.fields) as unknown as PhotoIndexDoc
       existing.slots = existing.slots ?? []
       existing.hours = (existing.hours as Record<string, number[]>) ?? {}
+      existing.hourCounts = (existing.hourCounts as Record<string, Record<string, number>>) ?? {}
     }
   }
 
@@ -553,15 +560,22 @@ export async function updatePhotoIndex(
   const hoursSet = new Set<number>(existing.hours[slotKey] ?? [])
   hoursSet.add(hourMin)
 
+  // hourCounts 遞增
+  const existingCounts = existing.hourCounts ?? {}
+  const slotCounts = { ...(existingCounts[slotKey] ?? {}) }
+  const hourKey = String(hourMin)
+  slotCounts[hourKey] = (slotCounts[hourKey] ?? 0) + 1
+
   const updated: PhotoIndexDoc = {
     slots: Array.from(slotsSet),
     hours: { ...existing.hours, [slotKey]: Array.from(hoursSet) },
+    hourCounts: { ...existingCounts, [slotKey]: slotCounts },
   }
 
-  // PATCH 完整覆寫（updateMask 包含 slots + hours）
+  // PATCH 完整覆寫（updateMask 包含 slots + hours + hourCounts）
   const fields = toFirestoreFields(updated as unknown as Record<string, unknown>)
   const patchRes = await fetch(
-    `${baseUrl}?updateMask.fieldPaths=slots&updateMask.fieldPaths=hours`,
+    `${baseUrl}?updateMask.fieldPaths=slots&updateMask.fieldPaths=hours&updateMask.fieldPaths=hourCounts`,
     {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
