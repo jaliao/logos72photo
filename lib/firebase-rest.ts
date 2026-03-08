@@ -483,9 +483,10 @@ export async function getPhotoIndexByDate(date: string): Promise<Record<string, 
  * 讀取 photo_index 集合所有文件，回傳與 queryDatesWithSlots 相同介面。
  * 用於首頁，讀取量為 O(日期數) 而非 O(照片數)。
  */
-export async function queryPhotoIndex(): Promise<
-  Array<{ date: string; slots: Set<0 | 8 | 16> }>
-> {
+export async function queryPhotoIndex(
+  startDate?: string,
+  endDate?: string,
+): Promise<Array<{ date: string; slots: Set<0 | 8 | 16> }>> {
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
   const token = await getAccessToken()
 
@@ -510,6 +511,11 @@ export async function queryPhotoIndex(): Promise<
       const parsed = parseFirestoreFields(doc.fields) as unknown as PhotoIndexDoc
       const slots = new Set<0 | 8 | 16>((parsed.slots ?? []) as Array<0 | 8 | 16>)
       return { date, slots }
+    })
+    .filter(({ date }) => {
+      if (startDate && date < startDate) return false
+      if (endDate && date > endDate) return false
+      return true
     })
     .sort((a, b) => b.date.localeCompare(a.date))
 }

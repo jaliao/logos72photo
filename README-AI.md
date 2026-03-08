@@ -6,7 +6,7 @@
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.25 相簿瀏覽體驗優化：全頁面 h1 統一品牌名稱、照片預覽頁 Lightbox（點擊全螢幕、下載原圖）、首頁卡片陰影加深。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.26 相簿首頁日期範圍過濾：以 `NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數限定顯示日期，結束日未設定時預設台灣今日。
 
 ---
 
@@ -123,7 +123,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.25**（本次）— cr-feat-260221-011：相簿瀏覽優化（全頁 h1 品牌統一、Lightbox 全螢幕預覽 + 下載、首頁卡片陰影加深）
+- **v0.1.26**（本次）— cr-spec-260308-001：首頁日期範圍過濾（`NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數，結束日預設台灣今日）
+- **v0.1.25** — cr-feat-260221-011：相簿瀏覽優化（全頁 h1 品牌統一、Lightbox 全螢幕預覽 + 下載、首頁卡片陰影加深）
 - **v0.1.24** — cr-spec-260305-007：相簿子頁面全面對齊首頁視覺（glassmorphism 卡片 + fadeIn + h1 排版統一）
 - **v0.1.23** — cr-spec-260304-010（續）：新增 `database.rules.json` 記錄 RTDB Security Rules（`sync/server_time` 匿名讀寫）；確認移除舊 RTDB 觸發後相機串流正常（tasks 1.1 + 3.3）
 - **v0.1.22** — cr-spec-260305-006：photo_index 反正規化索引，Firestore 讀取優化（首頁 reads O(photos)→O(dates)）

@@ -17,8 +17,14 @@ export default async function HomePage() {
   let dateList: Array<{ date: string; slots: Set<0 | 8 | 16> }> = []
   let error: string | null = null
 
+  // 日期範圍：由環境變數設定，結束日未設定時預設台灣今日（UTC+8）
+  const startDate = process.env.NEXT_PUBLIC_GALLERY_START_DATE
+  const endDate =
+    process.env.NEXT_PUBLIC_GALLERY_END_DATE ??
+    new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
   try {
-    dateList = await queryPhotoIndex()
+    dateList = await queryPhotoIndex(startDate, endDate)
   } catch (err) {
     error = err instanceof Error ? err.message : String(err)
   }
