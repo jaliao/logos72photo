@@ -6,7 +6,7 @@
  * ----------------------------------------------
  */
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
 
 /** R2 S3 相容客戶端 */
 export const r2 = new S3Client({
@@ -35,4 +35,34 @@ export async function uploadToR2(key: string, body: Uint8Array): Promise<string>
 
   const publicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, '')
   return `${publicUrl}/${key}`
+}
+
+/**
+ * 刪除 R2 中指定前綴下的所有物件（最多 1000 個）
+ * @param prefix 前綴，例如 "2026-03-08/"
+ * @returns 刪除的物件數量
+ */
+export async function deleteR2ObjectsByPrefix(prefix: string): Promise<number> {
+  const bucket = process.env.R2_BUCKET_NAME
+
+  // 列舉指定前綴的所有物件
+  const listRes = await r2.send(
+    new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix }),
+  )
+
+  const objects = listRes.Contents ?? []
+  if (objects.length === 0) return 0
+
+  // 批次刪除
+  await r2.send(
+    new DeleteObjectsCommand({
+      Bucket: bucket,
+      Delete: {
+        Objects: objects.map((obj) => ({ Key: obj.Key! })),
+        Quiet: true,
+      },
+    }),
+  )
+
+  return objects.length
 }

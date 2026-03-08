@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.28
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.29
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.28 照片預覽頁行動排版最佳化：縮圖改 `aspect-[3/4]` 直式比例 + 手機單欄（`grid-cols-1 sm:grid-cols-2`）；Lightbox `max-h-[85vh]` 直式完整顯示。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.29 後台測試資料批次清除：`POST /api/admin/purge-date` + `/admin/data-cleanup` 頁面，依日期清除 R2 / Firestore（photos、photo_index、error_logs、devices）。
 
 ---
 
@@ -96,6 +96,7 @@ Image Service Worker (logos72photo-image)
 
 ## 5. 關鍵業務邏輯 (Business Logic)
 
+- **後台測試資料批次清除**（v0.1.29 新增）：`POST /api/admin/purge-date`（`x-admin-secret` 保護）；`targets[]` 控制清除範圍（r2 / photos / photo_index / error_logs / devices）；`/admin/data-cleanup` 後台 UI（日期選擇 + 勾選 + 確認 + 結果摘要）；環境變數 `NEXT_PUBLIC_ADMIN_SECRET` 供前端傳 header
 - **照片預覽頁行動排版最佳化**（v0.1.28 新增）：`PhotoLightbox` 縮圖改 `aspect-[3/4]` 直式比例；手機 `grid-cols-1`、桌面 `sm:grid-cols-2`；Lightbox `max-h-[85vh]` 確保直式照片完整顯示
 - **時段列表頁小時格統一視覺**（v0.1.27 新增）：`photo_index/{date}` 新增 `hourCounts: Record<string, Record<string, number>>` 欄位；`updatePhotoIndex()` 每次上傳遞增對應計數；`getPhotoIndexByDate()` 回傳 `{ hours, hourCounts }`；時段列表頁小時格全改深色（`bg-zinc-800/50`），下方顯示「N 張」
 - **photo_index 反正規化索引**（v0.1.22 新增）：`photo_index/{date}` 集合儲存 slots + hours；上傳後 await 更新索引；首頁改呼叫 `queryPhotoIndex()`；slot 頁改呼叫 `getPhotoIndexByDate()`（1 read/次）；首頁讀取從最多 2000 reads 降至 ≤30
@@ -125,7 +126,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.28**（本次）— cr-spec-260308-003：照片預覽頁行動排版最佳化（直式比例 + 手機單欄 + Lightbox 高度調整）
+- **v0.1.29**（本次）— cr-spec-260304-012：後台測試資料批次清除（`/api/admin/purge-date` + `/admin/data-cleanup`）
+- **v0.1.28** — cr-spec-260308-003：照片預覽頁行動排版最佳化（直式比例 + 手機單欄 + Lightbox 高度調整）
 - **v0.1.27** — cr-spec-260308-002：時段列表頁小時格統一深色 + 照片張數顯示（`photo_index.hourCounts` 欄位）
 - **v0.1.26** — cr-spec-260308-001：首頁日期範圍過濾（`NEXT_PUBLIC_GALLERY_START_DATE` / `NEXT_PUBLIC_GALLERY_END_DATE` 環境變數，結束日預設台灣今日）
 - **v0.1.25** — cr-feat-260221-011：相簿瀏覽優化（全頁 h1 品牌統一、Lightbox 全螢幕預覽 + 下載、首頁卡片陰影加深）
