@@ -507,7 +507,7 @@ export async function queryPhotoIndex(): Promise<
     .map((doc) => {
       // document name 末段為 date（YYYY-MM-DD）
       const date = doc.name.split('/').pop() ?? ''
-      const parsed = parseFirestoreFields(doc.fields) as PhotoIndexDoc
+      const parsed = parseFirestoreFields(doc.fields) as unknown as PhotoIndexDoc
       const slots = new Set<0 | 8 | 16>((parsed.slots ?? []) as Array<0 | 8 | 16>)
       return { date, slots }
     })
@@ -533,7 +533,7 @@ export async function updatePhotoIndex(
   if (getRes.ok) {
     const data = (await getRes.json()) as { fields?: Record<string, unknown> }
     if (data.fields) {
-      existing = parseFirestoreFields(data.fields) as PhotoIndexDoc
+      existing = parseFirestoreFields(data.fields) as unknown as PhotoIndexDoc
       existing.slots = existing.slots ?? []
       existing.hours = (existing.hours as Record<string, number[]>) ?? {}
     }
