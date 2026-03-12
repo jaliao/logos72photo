@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.33
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.34
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.33 調整幻燈片視窗大小：桌機版容器改用 `max-h-screen` 確保高度不超過視窗，維持 `3/4` 比例；手機版維持滿版填滿。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.34 改版時段列表頁小時格照片牆：有照片時以第一張照片封面填滿（`object-cover` + `bg-black/70` 遮罩 + 白色時間文字），無照片時顯示灰色且不可點擊，移除照片張數顯示。
 
 ---
 
@@ -102,7 +102,8 @@ Image Service Worker (logos72photo-image)
 - **後台測試資料批次清除**（v0.1.29 新增）：`POST /api/admin/purge-date`（`x-admin-secret` 保護）；`targets[]` 控制清除範圍（r2 / photos / photo_index / error_logs / devices）；`/admin/data-cleanup` 後台 UI（日期選擇 + 勾選 + 確認 + 結果摘要）；環境變數 `NEXT_PUBLIC_ADMIN_SECRET` 供前端傳 header
 - **Google Photos 風格幻燈片**（v0.1.32 新增）：`PhotoLightbox` 全面升級為 `PhotoSlideshow`；左右箭頭 + 鍵盤方向鍵 + `useSwipe` Swipe 手勢切換；左上「← 返回」關閉（移除點擊背景關閉）；下載：`fetch(r2Url)` → Blob → Web Share API（iOS）/ `<a download>`（其他），檔名 `IMG_XXXX.jpg`（4位補零相簿順序號）；分享：Clipboard API 複製 `?photo={index}` 連結 + Toast；`?photo=` param 自動開啟幻燈片
 - **照片預覽頁行動排版最佳化**（v0.1.28 新增）：縮圖改 `aspect-[3/4]` 直式比例；手機 `grid-cols-1`、桌面 `sm:grid-cols-2`；幻燈片 `max-h-[85vh]` 確保直式照片完整顯示
-- **時段列表頁小時格統一視覺**（v0.1.27 新增）：`photo_index/{date}` 新增 `hourCounts: Record<string, Record<string, number>>` 欄位；`updatePhotoIndex()` 每次上傳遞增對應計數；`getPhotoIndexByDate()` 回傳 `{ hours, hourCounts }`；時段列表頁小時格全改深色（`bg-zinc-800/50`），下方顯示「N 張」
+- **時段列表頁小時格照片牆改版**（v0.1.34 新增）：`photo_index/{date}` 新增 `firstPhotos: Record<string, Record<string, string>>` 欄位（first-write-wins）；`updatePhotoIndex()` 在首次上傳時寫入封面 URL，後續不覆蓋；時段列表頁有照片小時格改以封面圖填滿（`<Image fill> + bg-black/70` 遮罩 + 白色時間文字），無照片小時格改為灰色不可點擊，移除照片張數顯示
+- **時段列表頁小時格統一視覺**（v0.1.27 新增）：`photo_index/{date}` 新增 `hourCounts: Record<string, Record<string, number>>` 欄位；`updatePhotoIndex()` 每次上傳遞增對應計數；`getPhotoIndexByDate()` 回傳 `{ hours, hourCounts, firstPhotos }`
 - **photo_index 反正規化索引**（v0.1.22 新增）：`photo_index/{date}` 集合儲存 slots + hours；上傳後 await 更新索引；首頁改呼叫 `queryPhotoIndex()`；slot 頁改呼叫 `getPhotoIndexByDate()`（1 read/次）；首頁讀取從最多 2000 reads 降至 ≤30
 - **相簿子頁面視覺全面對齊**（v0.1.24 新增）：時段列表頁小時格 grid 與照片預覽頁照片 grid 外包 glassmorphism 卡片（`rounded-2xl bg-white/50 p-5 + boxShadow: 0 4px 20px rgba(0,0,0,0.7)`）；進場 fadeIn 300ms；h1 統一為 `text-2xl text-zinc-900`；subtitle 統一為 `text-zinc-700`
 - **相簿子頁面視覺統一**（v0.1.21 新增）：時段列表頁（slot）與照片預覽頁（album）加入 `GalleryBackground`；標題加 `textShadow`；slot 頁小時卡片套用 `bg-zinc-800/50`；返回連結改為 `text-white/70`
@@ -130,7 +131,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.33**（本次）— cr-spec-260312-005：幻燈片視窗大小調整；桌機版容器 `max-h-screen` + `aspect-[3/4]`，高度不超過視窗；手機版維持 `inset-0` 滿版
+- **v0.1.34**（本次）— cr-spec-260312-004：時段列表頁小時格照片牆改版；有照片→封面+遮罩，無照片→灰色不可點擊，移除張數顯示；`photo_index.firstPhotos` 新欄位
+- **v0.1.33** — cr-spec-260312-005：幻燈片視窗大小調整；桌機版容器 `max-h-screen` + `aspect-[3/4]`，高度不超過視窗；手機版維持 `inset-0` 滿版
 - **v0.1.32** — cr-spec-260312-003：Google Photos 風格幻燈片（PhotoSlideshow）；左右切換、鍵盤方向鍵、Swipe、R2 CORS 下載、Web Share API（iOS）、分享連結、`?photo=` 自動開啟
 - **v0.1.31** — cr-spec-260312-001：相簿標題改為「2026 不間斷讀經接力」、副標題改為「讀經側拍相簿」、背景圖固定使用 `/bg/1.png`
 - **v0.1.30** — cr-spec-260308-004：相簿返回連結文字陰影（`textShadow: '0 1px 8px rgba(0,0,0,0.4)'`）

@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     const slot8h = getSlot8h(taiwanNow)
     const hourMin = taiwanNow.getUTCHours() * 60
     try {
-      await updatePhotoIndex(dateStr, slot8h, hourMin)
+      await updatePhotoIndex(dateStr, slot8h, hourMin, r2Url)
     } catch (err) {
       // 索引更新失敗不阻斷上傳，但記錄錯誤
       console.error('updatePhotoIndex 失敗：', err instanceof Error ? err.message : String(err))

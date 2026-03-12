@@ -53,6 +53,19 @@ export default function GalleryBackground() {
             animation: 'dayNightCycle 15s ease-in-out infinite alternate',
             /* 4. 加上 pointer-events-none 避免這層蓋住滑鼠點擊 */
             pointerEvents: 'none',
+            /* 5. 可選：加上 mix-blend-mode 讓漸層和背景圖更自然地融合（視覺調整） */
+            mixBlendMode: 'overlay',
+            /* 6. 可選：加上 filter 調整整體亮度和對比度，讓動畫效果更明顯（視覺調整） */
+            // filter: 'brightness(1.2) contrast(1.1)',
+            /* 7. 可選：加上 transition 讓動畫開始/結束時更平滑（視覺調整） */
+            transition: 'opacity 1s ease-in-out',
+            /* 8. 可選：加上 will-change 提升動畫性能（性能優化） */
+            willChange: 'background-position',
+            /* 9. 可選：加上 mask-image 讓漸層在底部逐漸淡出，避免畫面下方過於突兀（視覺調整） */
+            // -webkit-mask-image: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+            // mask-image: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
           }}
         />
       </div>

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 1 小時子相簿列表頁（依 8 小時時段）
- * 2026-02-21 (Updated: 2026-03-08)
+ * 2026-02-21 (Updated: 2026-03-12)
  * app/gallery/[date]/[slot]/page.tsx
  * ----------------------------------------------
  */
@@ -11,6 +11,7 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { getPhotoIndexByDate } from '@/lib/firebase-rest'
 import { formatSlot15m } from '@/lib/types'
 import GalleryBackground from '@/app/components/GalleryBackground'
@@ -36,11 +37,11 @@ export default async function SlotPage({ params }: Params) {
   const albums = generateSubAlbums(slot8h)
 
   // 讀取 photo_index/{date} 單一文件（1 read），取代掃描 photos 集合
-  let hourCounts: Record<string, number> = {}
+  let firstPhotos: Record<string, string> = {}
   let error: string | undefined
   try {
-    const { hourCounts: allCounts } = await getPhotoIndexByDate(date)
-    hourCounts = allCounts[String(slot8h)] ?? {}
+    const { firstPhotos: allFirstPhotos } = await getPhotoIndexByDate(date)
+    firstPhotos = allFirstPhotos[String(slot8h)] ?? {}
   } catch (err) {
     error = err instanceof Error ? err.message : String(err)
     console.error('[SlotPage] getPhotoIndexByDate 失敗：', error)
@@ -87,16 +88,41 @@ export default async function SlotPage({ params }: Params) {
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {albums.map((albumMin) => {
-              const count = hourCounts[String(albumMin)] ?? 0
+              const coverUrl = firstPhotos[String(albumMin)]
+              const timeLabel = formatSlot15m(albumMin)
+
+              if (coverUrl) {
+                // 有照片：顯示封面背景 + 70% 遮罩 + 白色時間文字
+                return (
+                  <Link
+                    key={albumMin}
+                    href={`/gallery/${date}/${slot}/${albumMin}`}
+                    className="relative overflow-hidden rounded-xl aspect-square"
+                  >
+                    <Image
+                      src={coverUrl}
+                      alt={timeLabel}
+                      fill
+                      sizes="(max-width: 640px) 50vw, 25vw"
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-black/70" />
+                    <span className="relative z-10 flex h-full items-center justify-center text-sm font-medium text-white">
+                      {timeLabel}
+                    </span>
+                  </Link>
+                )
+              }
+
+              // 無照片：灰色背景，不可點擊
               return (
-                <Link
+                <div
                   key={albumMin}
-                  href={`/gallery/${date}/${slot}/${albumMin}`}
-                  className="flex flex-col items-center justify-center rounded-xl bg-zinc-800/50 p-4 text-sm font-medium text-white transition hover:bg-zinc-700/60"
+                  className="flex aspect-square items-center justify-center rounded-xl bg-zinc-500 cursor-default text-sm font-medium text-white opacity-60"
                 >
-                  {formatSlot15m(albumMin)}
-                  <span className="mt-1 text-xs text-zinc-300">{count} 張</span>
-                </Link>
+                  {timeLabel}
+                </div>
               )
             })}
           </div>

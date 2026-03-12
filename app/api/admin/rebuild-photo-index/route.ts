@@ -43,15 +43,18 @@ export async function POST(req: NextRequest) {
           { field: 'slot_8h', value: slot8h },
         ])
 
-        // 計算各照片的 hourMin，去重後逐一更新索引
-        const hourMins = new Set<number>()
+        // 計算各照片的 hourMin，記錄每小時第一張照片 URL
+        const hourFirstPhoto = new Map<number, string>()
         for (const photo of photos) {
-          hourMins.add(Math.floor(photo.slot_15m / 60) * 60)
+          const hourMin = Math.floor(photo.slot_15m / 60) * 60
+          if (!hourFirstPhoto.has(hourMin)) {
+            hourFirstPhoto.set(hourMin, photo.r2_url)
+          }
           totalPhotos++
         }
 
-        for (const hourMin of hourMins) {
-          await updatePhotoIndex(date, slot8h as 0 | 8 | 16, hourMin)
+        for (const [hourMin, r2Url] of hourFirstPhoto) {
+          await updatePhotoIndex(date, slot8h as 0 | 8 | 16, hourMin, r2Url)
         }
       }
 

@@ -453,6 +453,7 @@ export interface PhotoIndexDoc {
   slots: number[]
   hours: Record<string, number[]>
   hourCounts?: Record<string, Record<string, number>>
+  firstPhotos?: Record<string, Record<string, string>>
 }
 
 /**
@@ -461,7 +462,7 @@ export interface PhotoIndexDoc {
  */
 export async function getPhotoIndexByDate(
   date: string,
-): Promise<{ hours: Record<string, number[]>; hourCounts: Record<string, Record<string, number>> }> {
+): Promise<{ hours: Record<string, number[]>; hourCounts: Record<string, Record<string, number>>; firstPhotos: Record<string, Record<string, string>> }> {
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
   const token = await getAccessToken()
 
@@ -470,18 +471,19 @@ export async function getPhotoIndexByDate(
     { headers: { Authorization: `Bearer ${token}` } },
   )
 
-  if (res.status === 404) return { hours: {}, hourCounts: {} }
+  if (res.status === 404) return { hours: {}, hourCounts: {}, firstPhotos: {} }
   if (!res.ok) {
     throw new Error(`Firestore getPhotoIndexByDate 失敗：${res.status} ${await res.text()}`)
   }
 
   const data = (await res.json()) as { fields?: Record<string, unknown> }
-  if (!data.fields) return { hours: {}, hourCounts: {} }
+  if (!data.fields) return { hours: {}, hourCounts: {}, firstPhotos: {} }
 
   const parsed = parseFirestoreFields(data.fields) as unknown as PhotoIndexDoc
   return {
     hours: (parsed.hours as Record<string, number[]>) ?? {},
     hourCounts: (parsed.hourCounts as Record<string, Record<string, number>>) ?? {},
+    firstPhotos: (parsed.firstPhotos as Record<string, Record<string, string>>) ?? {},
   }
 }
 
@@ -534,6 +536,7 @@ export async function updatePhotoIndex(
   date: string,
   slot8h: 0 | 8 | 16,
   hourMin: number,
+  r2Url?: string,
 ): Promise<void> {
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
   const token = await getAccessToken()
@@ -541,7 +544,7 @@ export async function updatePhotoIndex(
 
   // 讀取現有文件（不存在則用空結構）
   const getRes = await fetch(baseUrl, { headers: { Authorization: `Bearer ${token}` } })
-  let existing: PhotoIndexDoc = { slots: [], hours: {}, hourCounts: {} }
+  let existing: PhotoIndexDoc = { slots: [], hours: {}, hourCounts: {}, firstPhotos: {} }
   if (getRes.ok) {
     const data = (await getRes.json()) as { fields?: Record<string, unknown> }
     if (data.fields) {
@@ -549,6 +552,7 @@ export async function updatePhotoIndex(
       existing.slots = existing.slots ?? []
       existing.hours = (existing.hours as Record<string, number[]>) ?? {}
       existing.hourCounts = (existing.hourCounts as Record<string, Record<string, number>>) ?? {}
+      existing.firstPhotos = (existing.firstPhotos as Record<string, Record<string, string>>) ?? {}
     }
   }
 
@@ -566,16 +570,24 @@ export async function updatePhotoIndex(
   const hourKey = String(hourMin)
   slotCounts[hourKey] = (slotCounts[hourKey] ?? 0) + 1
 
+  // firstPhotos first-write-wins：僅在尚未設定時寫入封面 URL
+  const existingFirstPhotos = existing.firstPhotos ?? {}
+  const slotFirstPhotos = { ...(existingFirstPhotos[slotKey] ?? {}) }
+  if (r2Url && !slotFirstPhotos[hourKey]) {
+    slotFirstPhotos[hourKey] = r2Url
+  }
+
   const updated: PhotoIndexDoc = {
     slots: Array.from(slotsSet),
     hours: { ...existing.hours, [slotKey]: Array.from(hoursSet) },
     hourCounts: { ...existingCounts, [slotKey]: slotCounts },
+    firstPhotos: { ...existingFirstPhotos, [slotKey]: slotFirstPhotos },
   }
 
-  // PATCH 完整覆寫（updateMask 包含 slots + hours + hourCounts）
+  // PATCH 完整覆寫（updateMask 包含 slots + hours + hourCounts + firstPhotos）
   const fields = toFirestoreFields(updated as unknown as Record<string, unknown>)
   const patchRes = await fetch(
-    `${baseUrl}?updateMask.fieldPaths=slots&updateMask.fieldPaths=hours&updateMask.fieldPaths=hourCounts`,
+    `${baseUrl}?updateMask.fieldPaths=slots&updateMask.fieldPaths=hours&updateMask.fieldPaths=hourCounts&updateMask.fieldPaths=firstPhotos`,
     {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
