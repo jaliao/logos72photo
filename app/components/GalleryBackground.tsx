@@ -1,21 +1,11 @@
 /*
  * ----------------------------------------------
- * 相簿首頁動態背景（白晝↔黑夜漸層動畫 + 隨機背景圖）
+ * 相簿首頁動態背景（白晝↔黑夜漸層動畫 + 固定背景圖）
  * app/components/GalleryBackground.tsx
  * ----------------------------------------------
  */
 
-'use client'
-
-import { useEffect, useState } from 'react'
-
 export default function GalleryBackground() {
-  const [bgIndex, setBgIndex] = useState<number | null>(null)
-
-  useEffect(() => {
-    setBgIndex(Math.floor(Math.random() * 10) + 1)
-  }, [])
-
   return (
     <>
       <style>{`
@@ -39,17 +29,15 @@ export default function GalleryBackground() {
         }}
       >
         {/* 背景圖層 */}
-        {bgIndex !== null && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage: `url(/bg/${bgIndex}.png)`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
-        )}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(/bg/1.png)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
 
         {/* 漸層動畫覆蓋層 */}
         <div

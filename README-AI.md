@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.30
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.31
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.29 後台測試資料批次清除：`POST /api/admin/purge-date` + `/admin/data-cleanup` 頁面，依日期清除 R2 / Firestore（photos、photo_index、error_logs、devices）。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.31 相簿 UI 更新：標題改為「2026 不間斷讀經接力」、副標題改為「讀經側拍相簿」、背景圖固定使用 `/bg/1.png`。
 
 ---
 
@@ -104,7 +104,7 @@ Image Service Worker (logos72photo-image)
 - **相簿子頁面視覺統一**（v0.1.21 新增）：時段列表頁（slot）與照片預覽頁（album）加入 `GalleryBackground`；標題加 `textShadow`；slot 頁小時卡片套用 `bg-zinc-800/50`；返回連結改為 `text-white/70`
 - **相簿首頁 Glassmorphism**（v0.1.20 新增）：日期卡片 `bg-white/50` + 深色 box-shadow；有照片時段格 `bg-zinc-800/50`；無照片時段格維持 `bg-zinc-100`（不透明）；首頁 `<h1>` 加 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
 - **相簿首頁卡片動畫**（v0.1.19 新增）：`GalleryDateList` Client Component；進場 staggered fadeIn（80ms × index，400ms）；退場 fadeOut（300ms）後 `router.push()`；exiting guard 防重複觸發
-- **相簿首頁動態背景**（v0.1.18 新增）：`GalleryBackground` Client Component；隨機選取 `/bg/1–10.png`；白晝↔黑夜 CSS `@keyframes dayNightCycle`（5 keyframe × 2s，opacity 0.7，右上暖色/左下深色，10s 無限循環）
+- **相簿首頁動態背景**（v0.1.18 新增）：`GalleryBackground` Server Component；固定使用 `/bg/1.png`（v0.1.31 起由隨機改固定）；白晝↔黑夜 CSS `@keyframes dayNightCycle`（5 keyframe × 2s，opacity 0.7，右上暖色/左下深色，10s 無限循環）
 - **錯誤日誌**（v0.1.17 新增）：CameraClient 三個 catch 點補 `logError`（fire-and-forget 呼叫 `/api/log-error`）；`/api/upload` catch 直接 Admin SDK 寫入；後台 `/admin/errors` 依台灣時間日期查詢，TTL 7 天自動清除；Firestore TTL policy 需在 Console 手動設定 `expires_at` 欄位
 - **Image Service**（v0.1.15 新增）：獨立 Cloudflare Worker，路由 `/resizing/{width}/{quality}/{r2_key}`；`@cf-wasm/photon` WASM 處理；兩層快取（Cache API + R2）；失敗 302 降級；`WATERMARK_ENABLED` 控制浮水印；前端 `ThumbnailImage` 元件含 onError fallback
 - **本地定時拍照**（v0.1.14）：cron（`4-59/5 * * * *`）於每 5 分鐘週期的第 4 分觸發；裝置倒數 **10 秒**後拍照
@@ -126,7 +126,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.30**（本次）— cr-spec-260308-004：相簿返回連結文字陰影（`textShadow: '0 1px 8px rgba(0,0,0,0.4)'`）
+- **v0.1.31**（本次）— cr-spec-260312-001：相簿標題改為「2026 不間斷讀經接力」、副標題改為「讀經側拍相簿」、背景圖固定使用 `/bg/1.png`
+- **v0.1.30** — cr-spec-260308-004：相簿返回連結文字陰影（`textShadow: '0 1px 8px rgba(0,0,0,0.4)'`）
 - **v0.1.29** — cr-spec-260304-012：後台測試資料批次清除（`/api/admin/purge-date` + `/admin/data-cleanup`）
 - **v0.1.28** — cr-spec-260308-003：照片預覽頁行動排版最佳化（直式比例 + 手機單欄 + Lightbox 高度調整）
 - **v0.1.27** — cr-spec-260308-002：時段列表頁小時格統一深色 + 照片張數顯示（`photo_index.hourCounts` 欄位）

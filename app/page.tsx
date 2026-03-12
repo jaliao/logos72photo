@@ -35,9 +35,9 @@ export default async function HomePage() {
       <div className="relative z-10 mx-auto max-w-lg">
         {/* 標題 */}
         <h1 className="mb-1 text-2xl font-bold text-zinc-900" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
-          不間斷讀經接力相簿
+          2026 不間斷讀經接力
         </h1>
-        <p className="mb-8 text-sm font-bold text-zinc-700">從白天到黑夜不停的運行</p>
+        <p className="mb-8 text-sm font-bold text-zinc-700">讀經側拍相簿</p>
 
         {/* 錯誤提示 */}
         {error && (

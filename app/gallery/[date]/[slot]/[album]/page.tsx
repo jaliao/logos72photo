@@ -92,7 +92,7 @@ export default async function AlbumPage({ params }: Params) {
           className="mb-1 mt-4 text-2xl font-bold text-zinc-900"
           style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
         >
-          不間斷讀經接力相簿
+          2026 不間斷讀經接力
         </h1>
         <p className="mb-6 text-sm text-zinc-700">{date} · {hourLabel}　{photos.length} 張照片</p>
 
