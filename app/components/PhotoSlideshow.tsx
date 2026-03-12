@@ -27,6 +27,7 @@ interface Props {
 
 export default function PhotoSlideshow({ photos }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [direction, setDirection] = useState<'left' | 'right' | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
   const [showToast, setShowToast] = useState(false)
 
@@ -54,11 +55,19 @@ export default function PhotoSlideshow({ photos }: Props) {
   const close = useCallback(() => setOpenIndex(null), [])
 
   const prev = useCallback(() => {
-    setOpenIndex((i) => (i !== null && i > 0 ? i - 1 : i))
+    setOpenIndex((i) => {
+      if (i === null || i <= 0) return i
+      setDirection('left')
+      return i - 1
+    })
   }, [])
 
   const next = useCallback(() => {
-    setOpenIndex((i) => (i !== null && i < photos.length - 1 ? i + 1 : i))
+    setOpenIndex((i) => {
+      if (i === null || i >= photos.length - 1) return i
+      setDirection('right')
+      return i + 1
+    })
   }, [photos.length])
 
   // 3.4：鍵盤事件監聽
@@ -72,6 +81,15 @@ export default function PhotoSlideshow({ photos }: Props) {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isOpen, close, prev, next])
+
+  // 轉場：在初始 off-screen 位置 render 後，觸發滑入動畫
+  useEffect(() => {
+    if (direction === null) return
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setDirection(null))
+    )
+    return () => cancelAnimationFrame(id)
+  }, [direction])
 
   // 4.2：Swipe 手勢
   const swipeHandlers = useSwipe(next, prev)
@@ -144,6 +162,7 @@ export default function PhotoSlideshow({ photos }: Props) {
       {isOpen && current !== null && openIndex !== null && (
         <div
           className="fixed inset-0 aspect-3/4 z-50 bg-black"
+          onClick={close}
           {...swipeHandlers}
         >
           {/* 模糊背景（同一張照片 cover 填滿，消除黑底） */}
@@ -159,7 +178,12 @@ export default function PhotoSlideshow({ photos }: Props) {
               手機（預設）：inset-0 object-cover — 填滿整個手機畫面
               桌機（sm:+）：h-full w-auto aspect-[3/4] object-cover — 3/4 比例填滿視窗高度 */}
           <div className="absolute inset-0 z-10 flex items-center justify-center">
-            <div className="absolute inset-0 sm:relative sm:inset-auto sm:max-h-screen sm:w-auto sm:aspect-[3/4]">
+            <div
+              className={`absolute inset-0 sm:relative sm:inset-auto sm:max-h-screen sm:w-auto sm:aspect-[3/4] transition-transform duration-300 ${
+                direction === 'right' ? 'translate-x-full' : direction === 'left' ? '-translate-x-full' : 'translate-x-0'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={current.slideUrl}
@@ -223,7 +247,7 @@ export default function PhotoSlideshow({ photos }: Props) {
           {/* 左側：上一張按鈕 */}
           <button
             className="absolute left-0 top-0 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
-            onClick={prev}
+            onClick={(e) => { e.stopPropagation(); prev() }}
             disabled={openIndex === 0}
             aria-label="上一張"
           >
@@ -237,7 +261,7 @@ export default function PhotoSlideshow({ photos }: Props) {
           {/* 右側：下一張按鈕 */}
           <button
             className="absolute right-0 top-0 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
-            onClick={next}
+            onClick={(e) => { e.stopPropagation(); next() }}
             disabled={openIndex === photos.length - 1}
             aria-label="下一張"
           >

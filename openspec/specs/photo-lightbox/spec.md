@@ -47,9 +47,9 @@
 - **WHEN** 幻燈片開啟中，訪客按下鍵盤 Escape 鍵
 - **THEN** 幻燈片 SHALL 關閉
 
-#### Scenario: 點擊黑色背景不關閉
+#### Scenario: 點擊背景關閉（參見「點擊背景關閉幻燈片」Requirement）
 - **WHEN** 幻燈片開啟中，訪客點擊照片外的背景區域
-- **THEN** 幻燈片 SHALL 維持開啟，不執行任何動作
+- **THEN** 幻燈片 SHALL 關閉（由 overlay onClick 觸發）
 
 ### Requirement: 幻燈片下載按鈕
 幻燈片右上角 SHALL 提供「下載」圖示按鈕。點擊後系統依平台觸發對應流程：
@@ -119,3 +119,33 @@
 #### Scenario: photo 參數超出範圍時 fallback
 - **WHEN** 訪客開啟 `?photo=999` 但相簿內只有 5 張照片
 - **THEN** 頁面 SHALL 正常載入照片列表，不開啟幻燈片，不顯示錯誤
+
+### Requirement: 幻燈片切換轉場動畫
+切換上一張 / 下一張照片時，前景照片 SHALL 以水平 `translateX` 動畫滑入，方向對應切換方向：切換至下一張時從右側（`translateX(100%)`）滑入，切換至上一張時從左側（`translateX(-100%)`）滑入。動畫時長 SHALL 為 300ms（`transition-transform duration-300`）。動畫期間 `direction` state 記錄方向，double `requestAnimationFrame` 後清除以觸發動畫。
+
+#### Scenario: 切換下一張時照片從右側滑入
+- **WHEN** 幻燈片開啟中，使用者點擊右箭頭、按下 → 鍵，或向左 Swipe
+- **THEN** 新照片 SHALL 從畫面右側（`translateX(100%)`）滑入中心（`translateX(0)`），動畫時長 300ms
+
+#### Scenario: 切換上一張時照片從左側滑入
+- **WHEN** 幻燈片開啟中，使用者點擊左箭頭、按下 ← 鍵，或向右 Swipe
+- **THEN** 新照片 SHALL 從畫面左側（`translateX(-100%)`）滑入中心（`translateX(0)`），動畫時長 300ms
+
+#### Scenario: 動畫結束後清除方向 state
+- **WHEN** 切換動畫播放完畢
+- **THEN** `direction` state SHALL 重設為 `null`，確保下次切換可正確設定新方向
+
+### Requirement: 點擊背景關閉幻燈片
+點擊前景照片容器以外的背景區域（模糊背景）SHALL 關閉幻燈片，效果等同點擊「← 返回」按鈕。前景照片容器、工具列、左右箭頭按鈕的點擊 SHALL 不觸發關閉（各自加上 `stopPropagation`）。
+
+#### Scenario: 點擊模糊背景關閉幻燈片
+- **WHEN** 幻燈片開啟中，使用者點擊前景照片容器以外的模糊背景區域
+- **THEN** 幻燈片 SHALL 關閉，返回照片縮圖列表
+
+#### Scenario: 點擊照片本體不關閉
+- **WHEN** 幻燈片開啟中，使用者點擊前景照片容器（照片本體）
+- **THEN** 幻燈片 SHALL 維持開啟，不觸發關閉
+
+#### Scenario: 點擊工具列或箭頭按鈕不關閉
+- **WHEN** 幻燈片開啟中，使用者點擊頂部工具列（返回、分享、下載按鈕）或左右箭頭按鈕
+- **THEN** 幻燈片 SHALL 執行對應動作（關閉 / 分享 / 下載 / 切換），不同時觸發背景關閉
