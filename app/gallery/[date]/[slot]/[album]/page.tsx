@@ -14,7 +14,7 @@ import Link from 'next/link'
 import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m, type PhotoDoc } from '@/lib/types'
 import GalleryBackground from '@/app/components/GalleryBackground'
-import PhotoLightbox, { type LightboxPhoto } from '@/app/components/PhotoLightbox'
+import PhotoSlideshow, { type SlideshowPhoto } from '@/app/components/PhotoSlideshow'
 
 /** 從 R2 URL 建構 image-service 縮圖 URL */
 function toThumbUrl(r2Url: string, width: number, quality: number): string {
@@ -63,11 +63,12 @@ export default async function AlbumPage({ params }: Params) {
 
   const hourLabel = `${formatSlot15m(hourMin)} – ${formatSlot15m(hourMin + 60)}`
 
-  // 準備 Lightbox 用的照片資料（Server Component 序列化為 props）
-  const lightboxPhotos: LightboxPhoto[] = photos.map((photo) => ({
+  // 準備幻燈片用的照片資料（Server Component 序列化為 props）
+  const lightboxPhotos: SlideshowPhoto[] = photos.map((photo, index) => ({
     r2Url: photo.r2_url,
     thumbUrl: toThumbUrl(photo.r2_url, 1280, 85),
     alt: `${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`,
+    filename: `IMG_${String(index + 1).padStart(4, '0')}.jpg`,
   }))
 
   return (
@@ -113,8 +114,8 @@ export default async function AlbumPage({ params }: Params) {
               opacity: 0,
             }}
           >
-            {/* PhotoLightbox 包含縮圖 grid 與全螢幕預覽（Client Component）*/}
-            <PhotoLightbox photos={lightboxPhotos} />
+            {/* PhotoSlideshow 包含縮圖 grid 與 Google Photos 風格幻燈片（Client Component）*/}
+            <PhotoSlideshow photos={lightboxPhotos} />
           </div>
         )}
       </div>

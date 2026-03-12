@@ -1,0 +1,257 @@
+/*
+ * ----------------------------------------------
+ * 照片幻燈片（Google Photos 風格全螢幕瀏覽）
+ * 2026-03-12
+ * app/components/PhotoSlideshow.tsx
+ * ----------------------------------------------
+ */
+
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useSwipe } from '@/app/hooks/useSwipe'
+
+export interface SlideshowPhoto {
+  r2Url: string
+  thumbUrl: string
+  alt: string
+  /** 下載時的預設檔名，例如 IMG_0001.jpg */
+  filename: string
+}
+
+interface Props {
+  photos: SlideshowPhoto[]
+}
+
+export default function PhotoSlideshow({ photos }: Props) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+
+  const isOpen = openIndex !== null
+  const current = isOpen ? photos[openIndex] : null
+
+  // 7.1 & 7.2：mount 時讀取 ?photo= query param 自動開啟幻燈片
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const photoParam = params.get('photo')
+    if (photoParam !== null) {
+      const idx = parseInt(photoParam, 10)
+      if (!isNaN(idx) && idx >= 0 && idx < photos.length) {
+        setOpenIndex(idx)
+      }
+    }
+  }, [photos.length])
+
+  // 2.3：開啟時鎖定背景捲動
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
+  const close = useCallback(() => setOpenIndex(null), [])
+
+  const prev = useCallback(() => {
+    setOpenIndex((i) => (i !== null && i > 0 ? i - 1 : i))
+  }, [])
+
+  const next = useCallback(() => {
+    setOpenIndex((i) => (i !== null && i < photos.length - 1 ? i + 1 : i))
+  }, [photos.length])
+
+  // 3.4：鍵盤事件監聽
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+      else if (e.key === 'ArrowLeft') prev()
+      else if (e.key === 'ArrowRight') next()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isOpen, close, prev, next])
+
+  // 4.2：Swipe 手勢
+  const swipeHandlers = useSwipe(next, prev)
+
+  // 5.1–5.4：下載原圖
+  const handleDownload = useCallback(async () => {
+    if (!current || isDownloading) return
+    setIsDownloading(true)
+    try {
+      const res = await fetch(current.r2Url)
+      const blob = await res.blob()
+      const file = new File([blob], current.filename, { type: blob.type || 'image/jpeg' })
+
+      // 5.2：iOS Web Share API
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: current.filename })
+      } else {
+        // 5.3：其他平台 — <a download>
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = current.filename
+        a.click()
+        URL.revokeObjectURL(url)
+      }
+    } catch {
+      // 使用者取消分享或下載失敗，靜默處理
+    } finally {
+      setIsDownloading(false)
+    }
+  }, [current, isDownloading])
+
+  // 6.1 & 6.2：分享連結至剪貼簿
+  const handleShare = useCallback(async () => {
+    if (openIndex === null) return
+    const base = window.location.href.split('?')[0]
+    const url = `${base}?photo=${openIndex}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2000)
+    } catch {
+      // 剪貼簿寫入失敗，靜默處理
+    }
+  }, [openIndex])
+
+  return (
+    <>
+      {/* 縮圖 Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {photos.map((photo, i) => (
+          <div
+            key={photo.r2Url}
+            className="relative cursor-pointer overflow-hidden rounded-xl bg-zinc-200"
+            onClick={() => setOpenIndex(i)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.thumbUrl}
+              alt={photo.alt}
+              className="aspect-[3/4] w-full object-cover transition hover:opacity-80"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 幻燈片全螢幕覆蓋層 */}
+      {isOpen && current !== null && openIndex !== null && (
+        <div
+          className="fixed inset-0 aspect-3/4 z-50 bg-black"
+          {...swipeHandlers}
+        >
+          {/* 模糊背景（同一張照片 cover 填滿，消除黑底） */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={current.thumbUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 brightness-50"
+          />
+
+          {/* 前景照片
+              手機（預設）：inset-0 object-cover — 填滿整個手機畫面
+              桌機（sm:+）：h-full w-auto aspect-[3/4] object-cover — 3/4 比例填滿視窗高度 */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <div className="absolute inset-0 sm:relative sm:inset-auto sm:h-full sm:w-auto sm:aspect-[3/4] sm:max-w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={current.thumbUrl}
+                alt={current.alt}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+
+          {/* 頂部工具列（浮於照片上，漸層背景確保可讀性） */}
+          <div
+            className="absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between px-2"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)' }}
+          >
+            {/* 左上角：返回按鈕 */}
+            <button
+              className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition"
+              onClick={close}
+              aria-label="返回照片列表"
+            >
+              ← 返回
+            </button>
+
+            {/* 右上角：分享 + 下載按鈕 */}
+            <div className="flex items-center gap-1">
+              {/* 分享按鈕 */}
+              <button
+                className="rounded-lg p-2 text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition"
+                onClick={handleShare}
+                aria-label="複製分享連結"
+                title="複製分享連結"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </button>
+
+              {/* 下載按鈕 */}
+              <button
+                className="rounded-lg p-2 text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition disabled:opacity-40"
+                onClick={handleDownload}
+                disabled={isDownloading}
+                aria-label={isDownloading ? '下載中…' : '下載照片'}
+                title={isDownloading ? '下載中…' : `下載 ${current.filename}`}
+              >
+                {isDownloading ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* 左側：上一張按鈕 */}
+          <button
+            className="absolute left-0 top-0 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
+            onClick={prev}
+            disabled={openIndex === 0}
+            aria-label="上一張"
+          >
+            <span className="rounded-full p-2 hover:bg-black/30">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </span>
+          </button>
+
+          {/* 右側：下一張按鈕 */}
+          <button
+            className="absolute right-0 top-0 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
+            onClick={next}
+            disabled={openIndex === photos.length - 1}
+            aria-label="下一張"
+          >
+            <span className="rounded-full p-2 hover:bg-black/30">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </span>
+          </button>
+
+          {/* 6.3：「已複製！」Toast */}
+          {showToast && (
+            <div className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/20 px-4 py-2 text-sm text-white backdrop-blur-sm">
+              已複製！
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}

@@ -1,3 +1,5 @@
+## MODIFIED Requirements
+
 ### Requirement: 照片 Lightbox 全螢幕預覽
 照片預覽頁（`/gallery/[date]/[slot]/[album]`）的每張縮圖 SHALL 可點擊，開啟全螢幕幻燈片（Google Photos 風格），顯示該照片的高解析縮圖（1280px WebP）。幻燈片背景 SHALL 顯示同一張照片的模糊版本（`blur + brightness-50`）填滿視窗，消除黑底。幻燈片 SHALL 接收整個相簿的照片陣列，並記錄當前顯示的 index，讓使用者可在相同幻燈片介面內切換照片。
 
@@ -33,7 +35,7 @@
 - **THEN** 幻燈片 SHALL 關閉
 
 #### Scenario: 點擊黑色背景不關閉
-- **WHEN** 幻燈片開啟中，訪客點擊照片外的背景區域
+- **WHEN** 幻燈片開啟中，訪客點擊照片外的黑色背景區域
 - **THEN** 幻燈片 SHALL 維持開啟，不執行任何動作
 
 ### Requirement: 幻燈片下載按鈕
@@ -50,6 +52,8 @@
 #### Scenario: 下載中顯示 loading 狀態
 - **WHEN** 訪客點擊下載按鈕，系統正在 fetch 原圖
 - **THEN** 下載按鈕 SHALL 顯示 loading 指示器，且不可重複點擊，直到 fetch 完成
+
+## ADDED Requirements
 
 ### Requirement: 幻燈片左右照片導覽
 幻燈片 SHALL 在畫面左右側顯示上一張 / 下一張箭頭按鈕。同時支援鍵盤左右方向鍵切換，以及手機水平 Swipe 手勢（deltaX > 50px）切換。已為第一張時左箭頭 SHALL disabled 或隱藏；已為最後一張時右箭頭 SHALL disabled 或隱藏（不循環）。
@@ -99,3 +103,9 @@
 #### Scenario: photo 參數超出範圍時 fallback
 - **WHEN** 訪客開啟 `?photo=999` 但相簿內只有 5 張照片
 - **THEN** 頁面 SHALL 正常載入照片列表，不開啟幻燈片，不顯示錯誤
+
+## REMOVED Requirements
+
+### Requirement: Lightbox 下載按鈕
+**Reason:** 替換為新的幻燈片下載按鈕（含 Blob fetch + Web Share API + 預設檔名）
+**Migration:** 使用新的「幻燈片下載按鈕」Requirement，行為升級為 Blob 下載並支援 iOS 系統分享
