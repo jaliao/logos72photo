@@ -17,18 +17,7 @@ import { db } from '@/lib/firebase'
 import { HEARTBEAT_INTERVAL_MS, OFFLINE_THRESHOLD_MS } from '@/lib/constants'
 import { logoutAction } from '@/app/admin/login/actions'
 import type { DeviceDoc } from '@/lib/types'
-
-/** 從 R2 URL 建構 image-service 縮圖 URL */
-function toThumbUrl(r2Url: string, width: number, quality: number): string {
-  const imageServiceUrl = process.env.NEXT_PUBLIC_IMAGE_SERVICE_URL?.replace(/\/$/, '') ?? ''
-  if (!imageServiceUrl) return r2Url
-  try {
-    const r2Key = new URL(r2Url).pathname.slice(1) // 去掉開頭 /
-    return `${imageServiceUrl}/resizing/${width}/${quality}/${r2Key}`
-  } catch {
-    return r2Url
-  }
-}
+import { toThumb640 } from '@/lib/image'
 
 // 電量顯示
 function BatteryBar({ level }: { level: number | null }) {
@@ -103,6 +92,12 @@ export default function MonitoringPage() {
           </div>
           <div className="flex items-center gap-3">
             <a
+              href="/admin/rebuild-first-photos"
+              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
+            >
+              封面索引
+            </a>
+            <a
               href="/admin/errors"
               className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
             >
@@ -152,7 +147,7 @@ export default function MonitoringPage() {
                   {device.last_photo_url ? (
                     <div className="mb-4 overflow-hidden rounded-xl">
                       <ThumbnailImage
-                        src={toThumbUrl(device.last_photo_url, 640, 80)}
+                        src={toThumb640(device.last_photo_url)}
                         fallbackSrc={device.last_photo_url}
                         alt={`${device.device_id} 最新照片`}
                         className="h-48 w-full object-cover"

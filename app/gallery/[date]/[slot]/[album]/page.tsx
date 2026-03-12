@@ -13,20 +13,9 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { queryPhotos } from '@/lib/firebase-rest'
 import { formatSlot15m, type PhotoDoc } from '@/lib/types'
+import { toThumb640, toThumb1280 } from '@/lib/image'
 import GalleryBackground from '@/app/components/GalleryBackground'
 import PhotoSlideshow, { type SlideshowPhoto } from '@/app/components/PhotoSlideshow'
-
-/** 從 R2 URL 建構 image-service 縮圖 URL */
-function toThumbUrl(r2Url: string, width: number, quality: number): string {
-  const imageServiceUrl = process.env.NEXT_PUBLIC_IMAGE_SERVICE_URL?.replace(/\/$/, '') ?? ''
-  if (!imageServiceUrl) return r2Url
-  try {
-    const r2Key = new URL(r2Url).pathname.slice(1)
-    return `${imageServiceUrl}/resizing/${width}/${quality}/${r2Key}`
-  } catch {
-    return r2Url
-  }
-}
 
 interface Params {
   params: Promise<{ date: string; slot: string; album: string }>
@@ -66,7 +55,8 @@ export default async function AlbumPage({ params }: Params) {
   // 準備幻燈片用的照片資料（Server Component 序列化為 props）
   const lightboxPhotos: SlideshowPhoto[] = photos.map((photo, index) => ({
     r2Url: photo.r2_url,
-    thumbUrl: toThumbUrl(photo.r2_url, 1280, 85),
+    thumbUrl: toThumb640(photo.r2_url),
+    slideUrl: toThumb1280(photo.r2_url),
     alt: `${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`,
     filename: `IMG_${String(index + 1).padStart(4, '0')}.jpg`,
   }))

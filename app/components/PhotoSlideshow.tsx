@@ -14,6 +14,8 @@ import { useSwipe } from '@/app/hooks/useSwipe'
 export interface SlideshowPhoto {
   r2Url: string
   thumbUrl: string
+  /** 1280px 縮圖，用於幻燈片主畫面顯示與 iOS 分享 */
+  slideUrl: string
   alt: string
   /** 下載時的預設檔名，例如 IMG_0001.jpg */
   filename: string
@@ -79,15 +81,17 @@ export default function PhotoSlideshow({ photos }: Props) {
     if (!current || isDownloading) return
     setIsDownloading(true)
     try {
-      const res = await fetch(current.r2Url)
+      // 5.2：iOS Web Share API — 使用 1280 縮圖分享
+      const iosCapable = navigator.canShare?.({ files: [new File([], current.filename)] })
+      const fetchUrl = iosCapable ? current.slideUrl : current.r2Url
+      const res = await fetch(fetchUrl)
       const blob = await res.blob()
       const file = new File([blob], current.filename, { type: blob.type || 'image/jpeg' })
 
-      // 5.2：iOS Web Share API
-      if (navigator.canShare?.({ files: [file] })) {
+      if (iosCapable) {
         await navigator.share({ files: [file], title: current.filename })
       } else {
-        // 5.3：其他平台 — <a download>
+        // 5.3：其他平台 — <a download>（原圖）
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -145,7 +149,7 @@ export default function PhotoSlideshow({ photos }: Props) {
           {/* 模糊背景（同一張照片 cover 填滿，消除黑底） */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={current.thumbUrl}
+            src={current.slideUrl}
             alt=""
             aria-hidden="true"
             className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 brightness-50"
@@ -158,7 +162,7 @@ export default function PhotoSlideshow({ photos }: Props) {
             <div className="absolute inset-0 sm:relative sm:inset-auto sm:max-h-screen sm:w-auto sm:aspect-[3/4]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={current.thumbUrl}
+                src={current.slideUrl}
                 alt={current.alt}
                 className="h-full w-full object-cover"
               />

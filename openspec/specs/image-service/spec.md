@@ -1,11 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: 影像處理路由
-Image-service Worker SHALL 提供統一的影像處理端點，接受 width、quality 與 r2_key 參數，回傳處理後的 JPEG 圖片。
+Image Service Worker SHALL 提供 `GET /resizing/{width}/{quality}/{r2_key}` 路由，接受任意 `width`（px）與 `quality`（1-100）參數，回傳對應尺寸的 WebP 格式縮圖。呼叫端 SHALL 透過 `lib/image.ts` 的 `toThumbUrl()`、`toThumb640()`、`toThumb1280()` 產生對應 URL，不得在元件或頁面內直接拼接 Image Service URL 或硬編碼縮圖尺寸。
 
-#### Scenario: 正常請求回傳 JPEG 縮圖
+#### Scenario: 有效路由回傳縮圖
 - **WHEN** 用戶端發送 `GET /resizing/{width}/{quality}/{r2_key}`
-- **THEN** 系統 SHALL 回傳 Content-Type 為 `image/jpeg` 的圖片，尺寸為指定寬度（高度等比例）
+- **THEN** 系統 SHALL 回傳指定尺寸的圖片，尺寸為指定寬度（高度等比例）
+
+#### Scenario: 呼叫端透過 lib/image 取得縮圖 URL
+- **WHEN** 任意頁面或元件需要縮圖 URL
+- **THEN** 該頁面 SHALL import `toThumb640` 或 `toThumb1280` 自 `lib/image`，不重複定義 `toThumbUrl`
 
 #### Scenario: width 超出範圍
 - **WHEN** width 小於 1 或大於 3000

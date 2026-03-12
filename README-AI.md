@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.35
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.36
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.35 新增後台「重建照片封面索引」頁面（`/admin/rebuild-first-photos`），提供一鍵回補 `photo_index.firstPhotos` 欄位的操作介面。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.36 集中管理縮圖 URL 至 `lib/image.ts`（`toThumb640` / `toThumb1280`），統一各情境圖片尺寸規則：grid 640、幻燈片主畫面 1280、下載 raw、iOS 分享 1280。
 
 ---
 
@@ -131,7 +131,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.35**（本次）— cr-spec-260312-006：後台新增「重建照片封面索引」頁面（`/admin/rebuild-first-photos`）；一鍵呼叫 `POST /api/admin/rebuild-photo-index` 回補 `firstPhotos`；顯示結果摘要與各日期明細
+- **v0.1.36**（本次）— cr-spec-260312-007：縮圖 URL 集中至 `lib/image.ts`；grid→640、幻燈片→1280、下載→raw、iOS 分享→1280；`SlideshowPhoto` 新增 `slideUrl` 欄位；移除各元件重複 `toThumbUrl` 定義
+- **v0.1.35** — cr-spec-260312-006：後台新增「重建照片封面索引」頁面（`/admin/rebuild-first-photos`）；一鍵呼叫 `POST /api/admin/rebuild-photo-index` 回補 `firstPhotos`；顯示結果摘要與各日期明細
 - **v0.1.34** — cr-spec-260312-004：時段列表頁小時格照片牆改版；有照片→封面+遮罩，無照片→灰色不可點擊，移除張數顯示；`photo_index.firstPhotos` 新欄位
 - **v0.1.33** — cr-spec-260312-005：幻燈片視窗大小調整；桌機版容器 `max-h-screen` + `aspect-[3/4]`，高度不超過視窗；手機版維持 `inset-0` 滿版
 - **v0.1.32** — cr-spec-260312-003：Google Photos 風格幻燈片（PhotoSlideshow）；左右切換、鍵盤方向鍵、Swipe、R2 CORS 下載、Web Share API（iOS）、分享連結、`?photo=` 自動開啟
