@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.32
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.33
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.32 相簿 UI 升級為 Google Photos 風格全螢幕幻燈片：左右切換、鍵盤方向鍵、Swipe 手勢、下載（R2 CORS + Web Share API / `<a download>`）、分享連結（Clipboard API + Toast）、`?photo=` query param 自動開啟。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.33 調整幻燈片視窗大小：桌機版容器改用 `max-h-screen` 確保高度不超過視窗，維持 `3/4` 比例；手機版維持滿版填滿。
 
 ---
 
@@ -130,7 +130,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.32**（本次）— cr-spec-260312-003：Google Photos 風格幻燈片（PhotoSlideshow）；左右切換、鍵盤方向鍵、Swipe、R2 CORS 下載、Web Share API（iOS）、分享連結、`?photo=` 自動開啟
+- **v0.1.33**（本次）— cr-spec-260312-005：幻燈片視窗大小調整；桌機版容器 `max-h-screen` + `aspect-[3/4]`，高度不超過視窗；手機版維持 `inset-0` 滿版
+- **v0.1.32** — cr-spec-260312-003：Google Photos 風格幻燈片（PhotoSlideshow）；左右切換、鍵盤方向鍵、Swipe、R2 CORS 下載、Web Share API（iOS）、分享連結、`?photo=` 自動開啟
 - **v0.1.31** — cr-spec-260312-001：相簿標題改為「2026 不間斷讀經接力」、副標題改為「讀經側拍相簿」、背景圖固定使用 `/bg/1.png`
 - **v0.1.30** — cr-spec-260308-004：相簿返回連結文字陰影（`textShadow: '0 1px 8px rgba(0,0,0,0.4)'`）
 - **v0.1.29** — cr-spec-260304-012：後台測試資料批次清除（`/api/admin/purge-date` + `/admin/data-cleanup`）

@@ -119,7 +119,7 @@ export default function PhotoSlideshow({ photos }: Props) {
   return (
     <>
       {/* 縮圖 Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2${isOpen ? ' hidden' : ''}`}>
         {photos.map((photo, i) => (
           <div
             key={photo.r2Url}
@@ -155,7 +155,7 @@ export default function PhotoSlideshow({ photos }: Props) {
               手機（預設）：inset-0 object-cover — 填滿整個手機畫面
               桌機（sm:+）：h-full w-auto aspect-[3/4] object-cover — 3/4 比例填滿視窗高度 */}
           <div className="absolute inset-0 z-10 flex items-center justify-center">
-            <div className="absolute inset-0 sm:relative sm:inset-auto sm:h-full sm:w-auto sm:aspect-[3/4] sm:max-w-full">
+            <div className="absolute inset-0 sm:relative sm:inset-auto sm:max-h-screen sm:w-auto sm:aspect-[3/4]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={current.thumbUrl}
