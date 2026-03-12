@@ -1,15 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: 隨機背景圖選取
-系統 SHALL 在 `GalleryBackground` 元件 mount 後，以 `Math.random()` 從 `/bg/1.png`–`/bg/10.png` 隨機選取一張作為背景圖。SSR 階段 SHALL 不渲染背景圖層（state 初始為 null），以避免 hydration mismatch。
+系統 SHALL 在 `GalleryBackground` 元件渲染時，固定使用 `/bg/1.png` 作為背景圖。不再使用 `Math.random()` 隨機選取，移除 `bgIndex` state 與 `useEffect` 邏輯。SSR 與 CSR 均可確定地渲染同一張圖，不需要 null guard。
 
-#### Scenario: 首次 mount 選取隨機背景圖
-- **WHEN** 使用者進入相簿首頁，`GalleryBackground` 完成 mount
-- **THEN** 系統 SHALL 顯示 `/bg/1.png`–`/bg/10.png` 中隨機一張作為全頁背景，每次重新整理可能顯示不同圖片
-
-#### Scenario: SSR 階段不渲染背景圖
-- **WHEN** 頁面由 server 渲染 HTML
-- **THEN** 背景圖層 SHALL 不出現在 server 輸出中，不產生 hydration mismatch
+#### Scenario: 渲染時固定使用 1.png
+- **WHEN** 使用者進入相簿首頁，`GalleryBackground` 渲染
+- **THEN** 系統 SHALL 固定顯示 `/bg/1.png` 作為全頁背景，每次重新整理顯示相同圖片
 
 ### Requirement: 白晝到黑夜漸層動畫覆蓋層
 系統 SHALL 在背景圖上疊加半透明漸層覆蓋層，以 CSS `@keyframes` 動畫實現白晝↔黑夜來回效果。
