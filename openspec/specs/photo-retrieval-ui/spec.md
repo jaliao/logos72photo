@@ -1,12 +1,12 @@
 ### Requirement: 時段導覽入口
-首頁 SHALL 自動從 Firestore 查詢有照片的日期與對應時段，以日期卡片列表方式呈現，不需要訪客手動輸入日期。頁面 SHALL 以行動裝置優先（Mobile-First）設計，預設樣式適配手機，桌面版為漸進增強。顯示範圍 SHALL 限制於環境變數 `NEXT_PUBLIC_GALLERY_START_DATE`（起始日）至 `NEXT_PUBLIC_GALLERY_END_DATE`（結束日，未設定則為台灣今日）之間的日期。
+首頁 SHALL 自動從 Firestore `photo_index` 集合查詢所有有照片的日期與對應時段（透過 `queryPhotoIndex()`），以日期卡片列表方式呈現，不需要訪客手動輸入日期。頁面 SHALL 以行動裝置優先（Mobile-First）設計，預設樣式適配手機，桌面版為漸進增強。
 
-#### Scenario: 首頁顯示有照片的日期列表（含日期範圍限制）
-- **WHEN** 訪客進入首頁，且已設定 `NEXT_PUBLIC_GALLERY_START_DATE`
-- **THEN** 系統 SHALL 只顯示起始日至結束日範圍內、至少有一張照片的日期，每個日期一張卡片，依日期由新到舊排列
+#### Scenario: 首頁顯示有照片的日期列表
+- **WHEN** 訪客進入首頁
+- **THEN** 系統 SHALL 顯示所有至少有一張照片的日期，每個日期一張卡片，依日期由新到舊排列
 
 #### Scenario: 無照片資料時顯示空狀態
-- **WHEN** Firestore 中尚無任何照片資料（或範圍內無照片）
+- **WHEN** `photo_index` 集合尚無任何文件
 - **THEN** 首頁 SHALL 顯示「尚無拍攝紀錄」提示，而非空白或錯誤畫面
 
 #### Scenario: 日期卡片顯示三個時段格
@@ -14,11 +14,11 @@
 - **THEN** 卡片 SHALL 包含三個時段格：早（00:00–08:00）、中（08:00–16:00）、晚（16:00–24:00）
 
 #### Scenario: 有照片的時段格視覺區分
-- **WHEN** 某日期的某時段（slot_8h）至少有一張照片
+- **WHEN** 某日期的某時段（slot_8h）在 `photo_index` 中有記錄
 - **THEN** 對應時段格 SHALL 以深色背景顯示，代表有照片可瀏覽
 
 #### Scenario: 無照片的時段格仍可點擊
-- **WHEN** 某日期的某時段無照片
+- **WHEN** 某日期的某時段在 `photo_index` 中無記錄
 - **THEN** 對應時段格 SHALL 以淺色背景顯示，點擊後仍可進入該時段的 1 小時子相簿列表
 
 #### Scenario: 點擊時段格進入子相簿列表
@@ -28,14 +28,6 @@
 #### Scenario: 手機版單欄排列
 - **WHEN** 訪客在手機（viewport 寬度 < 640px）瀏覽首頁
 - **THEN** 日期卡片列表 SHALL 以單欄方式垂直排列，時段格以三欄水平排列於卡片內
-
-#### Scenario: 未設定起始日時顯示所有日期
-- **WHEN** `NEXT_PUBLIC_GALLERY_START_DATE` 未設定
-- **THEN** 系統 SHALL 顯示所有有照片的日期（向下相容，維持現有行為）
-
-#### Scenario: 未設定結束日時以今日為上限
-- **WHEN** `NEXT_PUBLIC_GALLERY_END_DATE` 未設定
-- **THEN** 系統 SHALL 以台灣今日（UTC+8）作為結束日上限
 
 ### Requirement: 相簿日期範圍環境變數設定
 系統 SHALL 支援以環境變數 `NEXT_PUBLIC_GALLERY_START_DATE`（格式 `YYYY-MM-DD`）與 `NEXT_PUBLIC_GALLERY_END_DATE`（格式 `YYYY-MM-DD`，選填）控制首頁相簿顯示的日期範圍，方便不同活動場次獨立部署時限定可瀏覽的日期。
@@ -178,3 +170,56 @@
 #### Scenario: 照片預覽頁返回連結有陰影
 - **WHEN** 訪客進入照片預覽頁（`/gallery/[date]/[slot]/[album]`）
 - **THEN** 「← 返回」連結 SHALL 顯示 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
+
+### Requirement: 時段列表頁小時子相簿索引來源
+`/gallery/[date]/[slot]` 頁面判斷哪些小時有照片 SHALL 改為讀取 `photo_index/{date}` 單一文件（透過 `getPhotoIndexByDate()`），而非查詢 `photos` 集合。
+
+#### Scenario: 有照片的小時卡片以深色顯示
+- **WHEN** 某小時（hourMin）在 `photo_index/{date}.hours[slot]` 中有記錄
+- **THEN** 對應小時卡片 SHALL 以 `bg-zinc-800/50` 深色顯示
+
+#### Scenario: photo_index 不存在時所有小時格顯示為無照片
+- **WHEN** `photo_index/{date}` 文件不存在（歷史資料或索引尚未建立）
+- **THEN** 所有小時格 SHALL 顯示為淺色（無照片樣式），不拋出錯誤
+
+### Requirement: 時段列表頁視覺風格與首頁統一
+`/gallery/[date]/[slot]` 頁面 SHALL 使用與首頁相同的動態漸層背景（`GalleryBackground`），移除靜態 `bg-zinc-50` 背景色，並對標題與卡片套用 Glassmorphism 樣式。
+
+#### Scenario: 時段列表頁顯示動態背景
+- **WHEN** 訪客進入 `/gallery/{date}/{slot}`
+- **THEN** 頁面 SHALL 顯示 `GalleryBackground` 動態漸層背景，覆蓋全頁
+
+#### Scenario: 時段列表頁標題有 text-shadow
+- **WHEN** 時段列表頁顯示日期與時段標題
+- **THEN** `<h1>` SHALL 具有 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`，確保在動態背景上清晰可讀
+
+#### Scenario: 有照片小時卡片為半透明深色
+- **WHEN** 某小時子相簿有照片
+- **THEN** 對應卡片 SHALL 以 `bg-zinc-800/50` 半透明深色顯示
+
+#### Scenario: 無照片小時卡片維持不透明淺色
+- **WHEN** 某小時子相簿無照片
+- **THEN** 對應卡片 SHALL 維持 `bg-zinc-100` 不透明淺灰色，確保「無照片」提示清晰可讀
+
+#### Scenario: 時段列表頁返回連結在動態背景上可讀
+- **WHEN** 時段列表頁顯示返回連結
+- **THEN** 返回連結 SHALL 使用 `text-white/70 hover:text-white` 樣式，在各種背景色調下皆可讀
+
+### Requirement: 照片預覽頁視覺風格與首頁統一
+`/gallery/[date]/[slot]/[album]` 頁面 SHALL 使用與首頁相同的動態漸層背景（`GalleryBackground`），移除靜態 `bg-zinc-50` 背景色，標題加 `text-shadow`。
+
+#### Scenario: 照片預覽頁顯示動態背景
+- **WHEN** 訪客進入 `/gallery/{date}/{slot}/{album}`
+- **THEN** 頁面 SHALL 顯示 `GalleryBackground` 動態漸層背景，覆蓋全頁
+
+#### Scenario: 照片預覽頁標題有 text-shadow
+- **WHEN** 照片預覽頁顯示日期與小時範圍標題
+- **THEN** `<h1>` SHALL 具有 `textShadow: '0 1px 8px rgba(0,0,0,0.4)'`
+
+#### Scenario: 照片縮圖格樣式不受影響
+- **WHEN** 照片預覽頁顯示縮圖格
+- **THEN** 照片縮圖格（`rounded-xl bg-zinc-200`）SHALL 維持原有樣式，不套用半透明效果
+
+#### Scenario: 照片預覽頁返回連結在動態背景上可讀
+- **WHEN** 照片預覽頁顯示返回連結
+- **THEN** 返回連結 SHALL 使用 `text-white/70 hover:text-white` 樣式
