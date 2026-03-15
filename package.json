@@ -16,6 +16,7 @@
     "@cf-wasm/photon": "^0.3.4",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",
+    "jspdf": "^4.2.0",
     "next": "^15.5.2",
     "nosleep.js": "^0.12.0",
     "react": "19.2.3",
