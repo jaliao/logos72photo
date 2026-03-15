@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 後台：時段帳密查詢與 PDF 下載
- * 2026-03-15
+ * 後台：時段帳密查詢與列印
+ * 2026-03-15 (Updated: 2026-03-16)
  * app/admin/slot-passwords/page.tsx
  * ----------------------------------------------
  */
@@ -22,7 +22,6 @@ export default function SlotPasswordsPage() {
   const [page, setPage] = useState(0)
   const [tablePasswords, setTablePasswords] = useState<Record<string, string>>({})
   const [tableLoading, setTableLoading] = useState(false)
-  const [pdfLoading, setPdfLoading] = useState(false)
 
   const totalPages = Math.ceil(ALL_GROUPS.length / PAGE_SIZE)
   const pageGroups = ALL_GROUPS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -63,23 +62,7 @@ export default function SlotPasswordsPage() {
     setTableLoading(false)
   }
 
-  async function handleDownloadPdf() {
-    setPdfLoading(true)
-    try {
-      const res = await fetch('/api/admin/slot-passwords/pdf')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'slot-passwords.pdf'
-      a.click()
-      URL.revokeObjectURL(url)
-    } finally {
-      setPdfLoading(false)
-    }
-  }
-
-  return (
+return (
     <div className="min-h-screen bg-zinc-50 p-6">
       <h1 className="mb-6 text-xl font-bold text-zinc-900">時段帳密管理</h1>
 
@@ -128,13 +111,14 @@ export default function SlotPasswordsPage() {
             >
               {tableLoading ? '載入中…' : '顯示本頁密碼'}
             </button>
-            <button
-              onClick={handleDownloadPdf}
-              disabled={pdfLoading}
-              className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700 disabled:opacity-50"
+            <a
+              href="/admin/slot-passwords/print"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700"
             >
-              {pdfLoading ? '產生中…' : '下載全部 PDF'}
-            </button>
+              列印全部帳密
+            </a>
           </div>
         </div>
 
