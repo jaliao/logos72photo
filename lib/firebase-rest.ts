@@ -343,6 +343,52 @@ export async function queryPhotos(
 }
 
 /**
+ * Firestore REST：依 slot_group 查詢照片，依 timestamp 升冪排列
+ * @param slotGroup 8 碼分組號碼（MMDDHHSS），格式不符時回傳空陣列
+ */
+export async function getPhotosBySlotGroup(slotGroup: string): Promise<PhotoDoc[]> {
+  if (!/^\d{8}$/.test(slotGroup)) return []
+
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: 'photos' }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'slot_group' },
+          op: 'EQUAL',
+          value: { stringValue: slotGroup },
+        },
+      },
+      orderBy: [{ field: { fieldPath: 'timestamp' }, direction: 'ASCENDING' }],
+    },
+  }
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore getPhotosBySlotGroup 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const rows = (await res.json()) as Array<{ document?: { fields: Record<string, unknown> } }>
+  return rows
+    .filter((r) => r.document)
+    .map((r) => parseFirestoreFields(r.document!.fields) as unknown as PhotoDoc)
+}
+
+/**
  * Firestore REST：依日期查詢 error_logs，依 timestamp 降冪排列
  * @param date 台灣時間日期字串，格式 YYYY-MM-DD
  */

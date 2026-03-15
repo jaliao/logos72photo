@@ -11,7 +11,7 @@ export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToR2 } from '@/lib/r2'
 import { addDoc, updatePhotoIndex } from '@/lib/firebase-rest'
-import { getSlot8h, getSlot15m, type PhotoDoc } from '@/lib/types'
+import { getSlot8h, getSlot15m, getSlotGroup, type PhotoDoc } from '@/lib/types'
 
 const TW_OFFSET_MS = 8 * 60 * 60 * 1000
 const TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -59,18 +59,20 @@ export async function POST(req: NextRequest) {
     const r2Url = await uploadToR2(key, body)
 
     // 寫入 Firestore photos 集合（透過 REST API）
+    const slot15m = getSlot15m(taiwanNow)
     const photoDoc: PhotoDoc = {
       r2_url: r2Url,
       timestamp,
       device_id: deviceId,
-      date: dateStr,           // 台灣日期
+      date: dateStr,                   // 台灣日期
       slot_8h: getSlot8h(taiwanNow),   // 台灣時段
-      slot_15m: getSlot15m(taiwanNow), // 台灣 15 分鐘子相簿
+      slot_15m: slot15m,               // 台灣 15 分鐘子相簿
+      slot_group: getSlotGroup(dateStr, slot15m), // 個人時段分組號碼（MMDDHHSS）
     }
     await addDoc('photos', photoDoc as unknown as Record<string, unknown>)
 
     // 更新反正規化索引（await 確保 Cloudflare Workers edge runtime 不在回應後提前終止）
-    const slot8h = getSlot8h(taiwanNow)
+    const slot8h = photoDoc.slot_8h
     const hourMin = taiwanNow.getUTCHours() * 60
     try {
       await updatePhotoIndex(dateStr, slot8h, hourMin, r2Url)

@@ -20,6 +20,15 @@
     }
   ,
     {
+      "collectionGroup": "photos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "slot_group", "order": "ASCENDING" },
+        { "fieldPath": "timestamp",  "order": "ASCENDING" }
+      ]
+    }
+  ,
+    {
       "collectionGroup": "error_logs",
       "queryScope": "COLLECTION",
       "fields": [
