@@ -6,6 +6,7 @@
  * ----------------------------------------------
  */
 
+export const runtime = 'edge'
 import { generateAllSlotGroups, derivePassword, formatSlotGroupLabel } from '@/lib/slot-password'
 import PrintButton from './PrintButton'
 
