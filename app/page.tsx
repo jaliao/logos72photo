@@ -9,11 +9,17 @@
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
+import { redirect } from 'next/navigation'
 import { queryPhotoIndex } from '@/lib/firebase-rest'
 import GalleryBackground from '@/app/components/GalleryBackground'
 import GalleryDateList from '@/app/components/GalleryDateList'
 
 export default async function HomePage() {
+  // 相簿入口開關：唯有明確設定 NEXT_PUBLIC_GALLERY_ENABLED=true 才開放
+  if (process.env.NEXT_PUBLIC_GALLERY_ENABLED !== 'true') {
+    redirect('/album/login')
+  }
+
   let dateList: Array<{ date: string; slots: Set<0 | 8 | 16> }> = []
   let error: string | null = null
 
