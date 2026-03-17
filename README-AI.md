@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.41
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.42
 
 ---
 
@@ -132,7 +132,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.41**（本次）— cr-spec-260317-002：相簿首頁入口開關（`NEXT_PUBLIC_GALLERY_ENABLED`）；未設定或非 `'true'` 時 redirect `/album/login`（secure by default）
+- **v0.1.42**（本次）— cr-spec-260317-003：新增 `GalleryHeading` 共用元件；大標題 `rgb(219,175,141)`、次標題 `rgb(62,208,195)`；套用首頁、gallery slot/album、個人相簿共 4 頁
+- **v0.1.41** — cr-spec-260317-002：相簿首頁入口開關（`NEXT_PUBLIC_GALLERY_ENABLED`）；未設定或非 `'true'` 時 redirect `/album/login`（secure by default）
 - **v0.1.40** — cr-spec-260317-001：後台帳密 Excel 匯出；`GET /api/admin/slot-passwords/export`（edge runtime，SheetJS）；匯出起始 slotGroup `03251803`（2026/03/25 18:30）；`/admin/slot-passwords` 加入「匯出 Excel」按鈕（Blob 下載）；PDF 列印頁起始同步更新為 3/25 18:30
 - **v0.1.39** — cr-spec-260312-009：個人相簿帳密登入機制（`/album/[slotGroup]/login`；HMAC 派生密碼；`album_session` cookie 驗簽）
 - **v0.1.38** — cr-spec-260312-009（續）：帳密列印頁改用瀏覽器列印（支援中文）；登入頁 input 文字顏色修正

@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { getPhotosBySlotGroup } from '@/lib/firebase-rest'
 import { toThumb640, toThumb1280 } from '@/lib/image'
 import GalleryBackground from '@/app/components/GalleryBackground'
+import GalleryHeading from '@/app/components/GalleryHeading'
 import PhotoSlideshow, { type SlideshowPhoto } from '@/app/components/PhotoSlideshow'
 
 interface Params {
@@ -71,14 +72,7 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
           ← 返回
         </Link>
 
-        <h1
-          className="mb-1 mt-4 text-2xl font-bold text-zinc-900"
-          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
-        >
-          2026 不間斷讀經接力
-        </h1>
-        <p className="mb-1 text-sm text-zinc-700">{timeLabel}</p>
-        <p className="mb-6 font-mono text-xs text-zinc-500">時段編號　{slotGroup}</p>
+        <GalleryHeading subtitle={`${timeLabel}`} headingClassName="mt-4" subtitleClassName="mb-3 text-sm" />
 
         {photos.length === 0 ? (
           <p className="text-center text-zinc-400">此時段尚無照片</p>

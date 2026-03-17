@@ -15,6 +15,7 @@ import Image from 'next/image'
 import { getPhotoIndexByDate } from '@/lib/firebase-rest'
 import { formatSlot15m } from '@/lib/types'
 import GalleryBackground from '@/app/components/GalleryBackground'
+import GalleryHeading from '@/app/components/GalleryHeading'
 
 interface Params {
   params: Promise<{ date: string; slot: string }>
@@ -64,13 +65,7 @@ export default async function SlotPage({ params }: Params) {
           ← 返回
         </Link>
 
-        <h1
-          className="mb-1 mt-4 text-2xl font-bold text-zinc-900"
-          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
-        >
-          2026 不間斷讀經接力
-        </h1>
-        <p className="mb-6 text-sm text-zinc-700">{date} · {slotLabel}</p>
+        <GalleryHeading subtitle={`${date} · ${slotLabel}`} headingClassName="mt-4" />
 
         {error && (
           <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">

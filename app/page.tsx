@@ -13,6 +13,7 @@ import { redirect } from 'next/navigation'
 import { queryPhotoIndex } from '@/lib/firebase-rest'
 import GalleryBackground from '@/app/components/GalleryBackground'
 import GalleryDateList from '@/app/components/GalleryDateList'
+import GalleryHeading from '@/app/components/GalleryHeading'
 
 export default async function HomePage() {
   // 相簿入口開關：唯有明確設定 NEXT_PUBLIC_GALLERY_ENABLED=true 才開放
@@ -40,10 +41,7 @@ export default async function HomePage() {
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-lg">
         {/* 標題 */}
-        <h1 className="mb-1 text-2xl font-bold text-zinc-900" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
-          2026 不間斷讀經接力
-        </h1>
-        <p className="mb-8 text-sm font-bold text-zinc-700">讀經側拍相簿</p>
+        <GalleryHeading subtitle="讀經側拍相簿" subtitleClassName="mb-8 text-sm font-bold" />
 
         {/* 錯誤提示 */}
         {error && (
