@@ -92,6 +92,18 @@ export default function MonitoringPage() {
           </div>
           <div className="flex items-center gap-3">
             <a
+              href="/admin/slot-passwords"
+              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
+            >
+              密碼查詢
+            </a>
+            <a
+              href="/admin/rebuild-first-photos"
+              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
+            >
+              封面索引
+            </a>
+            <a
               href="/admin/rebuild-first-photos"
               className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
             >
