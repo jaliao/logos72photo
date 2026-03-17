@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.42
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.43
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.41 新增相簿首頁入口開關：環境變數 `NEXT_PUBLIC_GALLERY_ENABLED` 未設定或非 `'true'` 時，首頁直接 redirect 至 `/album/login`，預設關閉（secure by default）。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.43 新增 slotGroup 封面自動合成：Firebase Cloud Function（Firestore `photos/{docId}` onCreate 觸發），第一張照片上傳後自動以 `watermark2.png` 底圖合成封面（sharp cover-crop 844×861，嵌入 x=117,y=229），存入 R2 `covers/{slotGroup}.jpg`；同時提供本機批次腳本 `scripts/generate-covers.mjs` 補齊歷史封面。
 
 ---
 
@@ -22,6 +22,7 @@ logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPh
 | 部署（前端） | Cloudflare Pages | @cloudflare/next-on-pages ^1.13.16 |
 | 影像處理 | @cf-wasm/photon (WASM) | ^0.0.21 |
 | 影像服務 | Cloudflare Workers（logos72photo-image） | — |
+| 封面合成 | Firebase Cloud Functions（Node.js 18）+ sharp | sharp ^0.33.4 |
 
 ---
 
@@ -92,6 +93,7 @@ Image Service Worker (logos72photo-image)
   YYYY-MM-DD/{device_id}_{ts}.jpg     ← 原圖
   thumbnails/{width}w_{quality}q/
     YYYY-MM-DD/{device_id}_{ts}.jpg.webp  ← L2 快取縮圖
+  covers/{slotGroup}.jpg              ← slotGroup 封面（v0.1.43 新增）
   assets/watermark.png                ← 浮水印（可選）
 ```
 
@@ -132,7 +134,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.42**（本次）— cr-spec-260317-003：新增 `GalleryHeading` 共用元件；大標題 `rgb(219,175,141)`、次標題 `rgb(62,208,195)`；套用首頁、gallery slot/album、個人相簿共 4 頁
+- **v0.1.43**（本次）— cr-spec-260309-002：slotGroup 封面自動合成；Firebase Cloud Functions `generateCover`（Firestore `photos/{docId}` onCreate）；sharp cover-crop 844×861 嵌入 watermark2.png (x=117,y=229)；上傳 R2 `covers/{slotGroup}.jpg`；冪等保護（HeadObject 判斷）+ 第一張判斷（Firestore count）；本機批次腳本 `scripts/generate-covers.mjs`（--from/--to MMDD）
+- **v0.1.42** — cr-spec-260317-003：新增 `GalleryHeading` 共用元件；大標題 `rgb(219,175,141)`、次標題 `rgb(62,208,195)`；套用首頁、gallery slot/album、個人相簿共 4 頁
 - **v0.1.41** — cr-spec-260317-002：相簿首頁入口開關（`NEXT_PUBLIC_GALLERY_ENABLED`）；未設定或非 `'true'` 時 redirect `/album/login`（secure by default）
 - **v0.1.40** — cr-spec-260317-001：後台帳密 Excel 匯出；`GET /api/admin/slot-passwords/export`（edge runtime，SheetJS）；匯出起始 slotGroup `03251803`（2026/03/25 18:30）；`/admin/slot-passwords` 加入「匯出 Excel」按鈕（Blob 下載）；PDF 列印頁起始同步更新為 3/25 18:30
 - **v0.1.39** — cr-spec-260312-009：個人相簿帳密登入機制（`/album/[slotGroup]/login`；HMAC 派生密碼；`album_session` cookie 驗簽）
