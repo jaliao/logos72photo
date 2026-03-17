@@ -1,12 +1,12 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.37
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.40
 
 ---
 
 ## 1. 專案核心目標 (Core Objective)
 
-logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.37 強化 `PhotoSlideshow` 互動體驗：換頁加入 translateX 位移過場動畫（300ms），並新增點擊背景（圖片外側區域）關閉幻燈片行為。
+logos72photo 是攝影活動現場的多機同步拍照系統，支援多台 iPhone 依裝置本地時鐘定時拍照（cron 於每 5 分鐘週期的第 4 分觸發，倒數 10 秒後拍照）、自動上傳影像，並提供即時監控儀表板供工作人員確認裝置狀態。v0.1.40 新增後台帳密 Excel 匯出功能：`GET /api/admin/slot-passwords/export` 批次計算 2026/03/25 18:30 起所有時段密碼並回傳 `.xlsx` 檔案（SheetJS，edge runtime 相容）；`/admin/slot-passwords` 頁面加入「匯出 Excel」按鈕。
 
 ---
 
@@ -132,7 +132,10 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.37**（本次）— cr-spec-260312-008：`PhotoSlideshow` 換頁 translateX 過場動畫（300ms）；新增點擊圖片外側關閉（click-outside-to-close）行為
+- **v0.1.40**（本次）— cr-spec-260317-001：後台帳密 Excel 匯出；`GET /api/admin/slot-passwords/export`（edge runtime，SheetJS）；匯出起始 slotGroup `03251803`（2026/03/25 18:30）；`/admin/slot-passwords` 加入「匯出 Excel」按鈕（Blob 下載）；PDF 列印頁起始同步更新為 3/25 18:30
+- **v0.1.39** — cr-spec-260312-009：個人相簿帳密登入機制（`/album/[slotGroup]/login`；HMAC 派生密碼；`album_session` cookie 驗簽）
+- **v0.1.38** — cr-spec-260312-009（續）：帳密列印頁改用瀏覽器列印（支援中文）；登入頁 input 文字顏色修正
+- **v0.1.37** — cr-spec-260312-008：`PhotoSlideshow` 換頁 translateX 過場動畫（300ms）；新增點擊圖片外側關閉（click-outside-to-close）行為
 - **v0.1.36** — cr-spec-260312-007：縮圖 URL 集中至 `lib/image.ts`；grid→640、幻燈片→1280、下載→raw、iOS 分享→1280；`SlideshowPhoto` 新增 `slideUrl` 欄位；移除各元件重複 `toThumbUrl` 定義
 - **v0.1.35** — cr-spec-260312-006：後台新增「重建照片封面索引」頁面（`/admin/rebuild-first-photos`）；一鍵呼叫 `POST /api/admin/rebuild-photo-index` 回補 `firstPhotos`；顯示結果摘要與各日期明細
 - **v0.1.34** — cr-spec-260312-004：時段列表頁小時格照片牆改版；有照片→封面+遮罩，無照片→灰色不可點擊，移除張數顯示；`photo_index.firstPhotos` 新欄位

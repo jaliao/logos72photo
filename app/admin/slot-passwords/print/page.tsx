@@ -13,7 +13,9 @@ import PrintButton from './PrintButton'
 export const dynamic = 'force-dynamic'
 
 export default async function SlotPasswordsPrintPage() {
-  const groups = generateAllSlotGroups('2026-03-15', '2026-03-30')
+  const allGroups = generateAllSlotGroups('2026-03-25', '2026-03-30')
+  // 從 03/25 18:30（slotGroup 03251803）開始
+  const groups = allGroups.filter((sg) => sg >= '03251803')
 
   // 批次派生所有密碼
   const BATCH = 96
@@ -109,28 +111,28 @@ export default async function SlotPasswordsPrintPage() {
       <div className="toolbar">
         <div>
           <h1>時段相簿帳密清單</h1>
-          <span>共 {groups.length} 組　2026/03/15–03/30</span>
+          <span>共 {groups.length} 組　2026/03/25 18:30–03/30</span>
         </div>
         <PrintButton />
       </div>
 
       <div className="content">
         <div className="page-title">2026 不間斷讀經接力　時段相簿帳密</div>
-        <div className="page-sub">產生範圍：2026/03/15 00:00 – 2026/03/30 23:45　共 {groups.length} 組</div>
+        <div className="page-sub">產生範圍：2026/03/25 18:30 – 2026/03/30 23:45　共 {groups.length} 組</div>
 
         <table>
           <thead>
             <tr>
-              <th>分組號碼</th>
               <th>時段</th>
+              <th>帳號</th>
               <th>密碼</th>
             </tr>
           </thead>
           <tbody>
             {groups.map((sg, i) => (
               <tr key={sg}>
-                <td>{sg}</td>
                 <td>{formatSlotGroupLabel(sg)}</td>
+                <td>{sg}</td>
                 <td>{passwords[i]}</td>
               </tr>
             ))}

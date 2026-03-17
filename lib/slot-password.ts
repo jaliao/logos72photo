@@ -53,7 +53,7 @@ export function generateAllSlotGroups(startDate: string, endDate: string): strin
 
 /**
  * 將 slotGroup（MMDDHHSS）轉為可讀時段說明
- * 例：03150103 → "03/15 01:30–01:44"
+ * 例：03150103 → "03/15 01:30"
  */
 export function formatSlotGroupLabel(sg: string): string {
   const mm = sg.slice(0, 2)
@@ -61,10 +61,9 @@ export function formatSlotGroupLabel(sg: string): string {
   const hh = parseInt(sg.slice(4, 6), 10)
   const ss = parseInt(sg.slice(6, 8), 10)
   const startMin = (ss - 1) * 15
-  const endMin = startMin + 14
   const fmt = (h: number, m: number) =>
     `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-  return `${mm}/${dd} ${fmt(hh, startMin)}–${fmt(hh, endMin)}`
+  return `${mm}/${dd} ${fmt(hh, startMin)}`
 }
 
 /**
