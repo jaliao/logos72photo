@@ -19,7 +19,7 @@
 
 ## 4. 部署與驗證
 
-- [ ] 4.1 執行 `firebase deploy --only functions` 部署 Cloud Function
+- [x] 4.1 執行 `firebase deploy --only functions` 部署 Cloud Function
 - [ ] 4.2 上傳一張測試照片，確認 R2 `covers/` 下出現對應 `.jpg`
 - [ ] 4.3 再次上傳同 slotGroup 照片，確認不重複生成（冪等性驗證）
 

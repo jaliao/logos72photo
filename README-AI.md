@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.43
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.44
 
 ---
 
@@ -134,7 +134,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.43**（本次）— cr-spec-260309-002：slotGroup 封面自動合成；Firebase Cloud Functions `generateCover`（Firestore `photos/{docId}` onCreate）；sharp cover-crop 844×861 嵌入 watermark2.png (x=117,y=229)；上傳 R2 `covers/{slotGroup}.jpg`；冪等保護（HeadObject 判斷）+ 第一張判斷（Firestore count）；本機批次腳本 `scripts/generate-covers.mjs`（--from/--to MMDD）
+- **v0.1.44**（本次）— cr-spec-260317-004：個人相簿頁封面置首；`Promise.all` 並行 HEAD 請求確認封面存在，插入 `slideshowPhotos[0]`；封面不存在時靜默跳過
+- **v0.1.43** — cr-spec-260309-002：slotGroup 封面自動合成；Firebase Cloud Functions `generateCover`（Firestore `photos/{docId}` onCreate）；sharp cover-crop 844×861 嵌入 watermark2.png (x=117,y=229)；上傳 R2 `covers/{slotGroup}.jpg`；冪等保護（HeadObject 判斷）+ 第一張判斷（Firestore count）；本機批次腳本 `scripts/generate-covers.mjs`（--from/--to MMDD）
 - **v0.1.42** — cr-spec-260317-003：新增 `GalleryHeading` 共用元件；大標題 `rgb(219,175,141)`、次標題 `rgb(62,208,195)`；套用首頁、gallery slot/album、個人相簿共 4 頁
 - **v0.1.41** — cr-spec-260317-002：相簿首頁入口開關（`NEXT_PUBLIC_GALLERY_ENABLED`）；未設定或非 `'true'` 時 redirect `/album/login`（secure by default）
 - **v0.1.40** — cr-spec-260317-001：後台帳密 Excel 匯出；`GET /api/admin/slot-passwords/export`（edge runtime，SheetJS）；匯出起始 slotGroup `03251803`（2026/03/25 18:30）；`/admin/slot-passwords` 加入「匯出 Excel」按鈕（Blob 下載）；PDF 列印頁起始同步更新為 3/25 18:30

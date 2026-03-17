@@ -42,15 +42,35 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
     notFound()
   }
 
-  const photos = await getPhotosBySlotGroup(slotGroup)
+  const r2PublicUrl = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '')
+  const coverUrl = `${r2PublicUrl}/covers/${slotGroup}.jpg`
 
-  const slideshowPhotos: SlideshowPhoto[] = photos.map((photo, index) => ({
-    r2Url: photo.r2_url,
-    thumbUrl: toThumb640(photo.r2_url),
-    slideUrl: toThumb1280(photo.r2_url),
-    alt: `${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`,
-    filename: `IMG_${String(index + 1).padStart(4, '0')}.jpg`,
-  }))
+  // 並行查詢：Firestore 照片 + 封面存在性確認
+  const [photos, coverExists] = await Promise.all([
+    getPhotosBySlotGroup(slotGroup),
+    fetch(coverUrl, { method: 'HEAD' }).then(r => r.ok).catch(() => false),
+  ])
+
+  const coverPhoto: SlideshowPhoto | null = coverExists
+    ? {
+        r2Url: coverUrl,
+        thumbUrl: coverUrl,
+        slideUrl: coverUrl,
+        alt: '封面',
+        filename: 'COVER.jpg',
+      }
+    : null
+
+  const slideshowPhotos: SlideshowPhoto[] = [
+    ...(coverPhoto ? [coverPhoto] : []),
+    ...photos.map((photo, index) => ({
+      r2Url: photo.r2_url,
+      thumbUrl: toThumb640(photo.r2_url),
+      slideUrl: toThumb1280(photo.r2_url),
+      alt: `${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`,
+      filename: `IMG_${String(index + 1).padStart(4, '0')}.jpg`,
+    })),
+  ]
 
   const timeLabel = formatSlotGroupLabel(slotGroup)
 
