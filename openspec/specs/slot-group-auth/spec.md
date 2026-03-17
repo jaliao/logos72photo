@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: 來賓時段相簿登入頁
-系統 SHALL 提供 `/album/login` 頁面，讓來賓輸入分組號碼（帳號）與 8 碼數字密碼完成身分驗證，登入成功後導向 `/album/[slotGroup]`。
+系統 SHALL 提供 `/album/login` 頁面，讓來賓輸入分組號碼（帳號）與 8 碼數字密碼完成身分驗證，登入成功後導向 `/album/[slotGroup]`。密碼欄位 SHALL 預設以明文顯示（`type="text"`），並提供切換按鈕讓來賓隱藏輸入內容。
 
 #### Scenario: 輸入正確帳密後登入成功
 - **WHEN** 來賓在 `/album/login` 輸入有效 `slotGroup` 與對應密碼並送出
@@ -14,6 +14,14 @@
 #### Scenario: 輸入無效格式的分組號碼時顯示錯誤
 - **WHEN** 來賓輸入的分組號碼不符合 8 位數字格式
 - **THEN** 系統 SHALL 顯示「帳號格式錯誤」提示，不執行密碼驗證
+
+#### Scenario: 密碼預設明文顯示
+- **WHEN** 來賓進入 `/album/login`
+- **THEN** 密碼欄位 SHALL 預設以 `type="text"` 顯示輸入內容
+
+#### Scenario: 點擊切換按鈕隱藏密碼
+- **WHEN** 來賓點擊密碼欄位旁的切換按鈕
+- **THEN** 密碼欄位 SHALL 切換為 `type="password"`（隱藏），再次點擊恢復明文顯示
 
 ### Requirement: HMAC 密碼派生
 系統 SHALL 以 `SLOT_PASSWORD_SECRET` 環境變數為密鑰，`slotGroup`（8 碼字串）為訊息，使用 HMAC-SHA256 派生 8 位數字密碼。派生邏輯 SHALL 為：取摘要前 10 位十六進位字元轉 BigInt，模除 100,000,000 後以 8 碼零填補。

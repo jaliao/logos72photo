@@ -77,12 +77,12 @@ async function composeCover(photoBuffer: Buffer): Promise<Buffer> {
 
   // 將照片 cover-crop 至 844×861（取中央，不變形）
   const croppedBuffer = await sharp(photoBuffer)
-    .resize(844, 861, { fit: 'cover' })
+    .resize(843, 861, { fit: 'cover' })
     .toBuffer()
 
-  // 合成至底圖（1080×1440），照片置於 x=117, y=229
+  // 合成至底圖（1080×1440），照片置於 x=118, y=229
   const result = await sharp(watermarkBuffer)
-    .composite([{ input: croppedBuffer, left: 117, top: 229 }])
+    .composite([{ input: croppedBuffer, left: 118, top: 229 }])
     .jpeg({ quality: 88 })
     .toBuffer()
 
@@ -105,7 +105,7 @@ async function uploadCover(r2: S3Client, slotGroup: string, buffer: Buffer): Pro
  * Firestore `photos/{docId}` onCreate 觸發器。
  * 條件：slotGroup 的第一張照片 → 合成封面並上傳 R2。
  */
-export const generateCover = onDocumentCreated('photos/{docId}', async (event) => {
+export const generateCover = onDocumentCreated({ document: 'photos/{docId}', region: 'asia-east1' }, async (event) => {
   const data = event.data?.data()
   if (!data) return
 

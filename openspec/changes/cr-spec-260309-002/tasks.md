@@ -20,15 +20,15 @@
 ## 4. 部署與驗證
 
 - [x] 4.1 執行 `firebase deploy --only functions` 部署 Cloud Function
-- [ ] 4.2 上傳一張測試照片，確認 R2 `covers/` 下出現對應 `.jpg`
-- [ ] 4.3 再次上傳同 slotGroup 照片，確認不重複生成（冪等性驗證）
+- [x] 4.2 上傳一張測試照片，確認 R2 `covers/` 下出現對應 `.jpg`
+- [x] 4.3 再次上傳同 slotGroup 照片，確認不重複生成（冪等性驗證）
 
 ## 5. 本機批次補齊腳本
 
 - [x] 5.1 建立 `scripts/generate-covers.mjs`：讀取 CLI 參數 `--from`/`--to`（MMDD 格式）
 - [x] 5.2 實作 Firestore REST 查詢：取得各 slotGroup 的第一張照片 URL
 - [x] 5.3 實作 sharp 合成流程（與 Cloud Function 相同邏輯）並上傳 R2
-- [ ] 5.4 執行腳本補齊現有歷史 slotGroup 封面，驗證結果
+- [x] 5.4 執行腳本補齊現有歷史 slotGroup 封面，驗證結果
 
 ## 6. 版號與文件
 

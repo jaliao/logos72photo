@@ -77,14 +77,17 @@ try {
 const args = process.argv.slice(2)
 let fromMMDD = null
 let toMMDD = null
+let force = false
 
 for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--from' && args[i + 1]) fromMMDD = args[++i]
-  if (args[i] === '--to'   && args[i + 1]) toMMDD   = args[++i]
+  if (args[i] === '--from'  && args[i + 1]) fromMMDD = args[++i]
+  if (args[i] === '--to'    && args[i + 1]) toMMDD   = args[++i]
+  if (args[i] === '--force') force = true
 }
 
 console.log('── 封面批次合成 ──────────────────────────────────────')
 console.log(`日期範圍：${fromMMDD ?? '（全部）'} ～ ${toMMDD ?? '（全部）'}`)
+console.log(`覆蓋模式：${force ? '是（--force）' : '否（已存在跳過）'}`)
 console.log(`R2 Bucket：${R2_BUCKET_NAME}`)
 console.log(`Firebase Project：${FIREBASE_PROJECT_ID}`)
 console.log('─────────────────────────────────────────────────────')
@@ -245,11 +248,11 @@ const watermarkBuffer = readFileSync(WATERMARK_PATH)
 
 async function composeCover(photoBuffer) {
   const cropped = await sharp(photoBuffer)
-    .resize(844, 861, { fit: 'cover' })
+    .resize(843, 861, { fit: 'cover' })
     .toBuffer()
 
   return sharp(watermarkBuffer)
-    .composite([{ input: cropped, left: 117, top: 229 }])
+    .composite([{ input: cropped, left: 118, top: 229 }])
     .jpeg({ quality: 88 })
     .toBuffer()
 }
@@ -266,7 +269,7 @@ async function main() {
   for (const [slotGroup, { r2Url }] of firstPhotos.entries()) {
     process.stdout.write(`[${done + skipped + failed + 1}/${total}] ${slotGroup} ... `)
 
-    if (await coverExists(slotGroup)) {
+    if (!force && await coverExists(slotGroup)) {
       console.log('已存在，跳過')
       skipped++
       continue
