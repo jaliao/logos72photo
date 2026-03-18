@@ -203,6 +203,14 @@ export default function SlotPasswordsPage() {
           >
             列印全部帳密
           </a>
+          <a
+            href="/admin/slot-passwords/postcard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-sky-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-600"
+          >
+            列印明信片
+          </a>
         </div>
       </section>
     </div>

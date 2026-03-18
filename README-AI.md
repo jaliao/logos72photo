@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.45
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.46
 
 ---
 
@@ -134,7 +134,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.45**（本次）— cr-spec-260317-005：登入頁密碼欄位預設明文顯示，眼睛按鈕切換隱藏/顯示
+- **v0.1.46**（本次）— cr-spec-260319-001：後台 `/admin/slot-passwords` 新增「列印明信片」功能；新增 `/admin/slot-passwords/postcard` 頁面，以 `public/postcard/2.png` 為底圖，CSS 絕對定位疊印每個時段的日期、時間、帳號/密碼；每頁一張（`page-break-after: always`）；`window.print()` 轉存 PDF；`/admin/slot-passwords` 加入「列印明信片」入口按鈕
+- **v0.1.45** — cr-spec-260317-005：登入頁密碼欄位預設明文顯示，眼睛按鈕切換隱藏/顯示
 - **v0.1.44** — cr-spec-260317-004：個人相簿頁封面置首；`Promise.all` 並行 HEAD 請求確認封面存在，插入 `slideshowPhotos[0]`；封面不存在時靜默跳過
 - **v0.1.43** — cr-spec-260309-002：slotGroup 封面自動合成；Firebase Cloud Functions `generateCover`（Firestore `photos/{docId}` onCreate）；sharp cover-crop 844×861 嵌入 watermark2.png (x=117,y=229)；上傳 R2 `covers/{slotGroup}.jpg`；冪等保護（HeadObject 判斷）+ 第一張判斷（Firestore count）；本機批次腳本 `scripts/generate-covers.mjs`（--from/--to MMDD）
 - **v0.1.42** — cr-spec-260317-003：新增 `GalleryHeading` 共用元件；大標題 `rgb(219,175,141)`、次標題 `rgb(62,208,195)`；套用首頁、gallery slot/album、個人相簿共 4 頁
