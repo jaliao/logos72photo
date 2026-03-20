@@ -10,11 +10,19 @@ export const runtime = 'edge'
 
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
-import {
-  generateAllSlotGroups,
-  derivePassword,
-  formatSlotGroupLabel,
-} from '@/lib/slot-password'
+import { generateAllSlotGroups, derivePassword } from '@/lib/slot-password'
+
+/** slotGroup → "3/25/2026" */
+function getDate(sg: string): string {
+  return `${parseInt(sg.slice(0, 2), 10)}/${parseInt(sg.slice(2, 4), 10)}/2026`
+}
+
+/** slotGroup → "18:30" */
+function getTime(sg: string): string {
+  const hh = sg.slice(4, 6)
+  const min = String((parseInt(sg.slice(6, 8), 10) - 1) * 15).padStart(2, '0')
+  return `${hh}:${min}`
+}
 
 export async function GET(req: NextRequest) {
   // 驗證管理員 session
@@ -23,8 +31,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // 產生 slotGroups，從 03/25 18:30（03251803）開始
-  const allGroups = generateAllSlotGroups('2026-03-25', '2026-03-30')
+  // 產生 slotGroups：03/25 18:30 – 03/28 23:59
+  const allGroups = generateAllSlotGroups('2026-03-25', '2026-03-28')
   const groups = allGroups.filter((sg) => sg >= '03251803')
 
   // 批次計算密碼（每批 96 筆）
@@ -35,11 +43,11 @@ export async function GET(req: NextRequest) {
     passwords.push(...batch)
   }
 
-  // 建立工作表資料
+  // 建立工作表資料（格式對齊明信片）
   const rows = groups.map((sg, i) => ({
-    時段: formatSlotGroupLabel(sg),
-    帳號: sg,
-    密碼: passwords[i],
+    Date: getDate(sg),
+    Time: getTime(sg),
+    'Username/Password': `${sg}/${passwords[i]}`,
   }))
 
   const ws = XLSX.utils.json_to_sheet(rows)
