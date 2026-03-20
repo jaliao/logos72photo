@@ -6,7 +6,7 @@
  * ----------------------------------------------
  */
 
-import { PhotonImage, SamplingFilter, resize, watermark } from '@cf-wasm/photon'
+import { PhotonImage, SamplingFilter, resize } from '@cf-wasm/photon'
 
 /**
  * 將圖片縮放至指定寬度（高度等比例）
@@ -36,23 +36,4 @@ export function resizeToWidth(buffer: Uint8Array, width: number): PhotonImage {
  */
 export function encodeJpeg(img: PhotonImage, quality: number): Uint8Array {
   return img.get_bytes_jpeg(quality)
-}
-
-/**
- * 在圖片右下角疊加浮水印
- * @param img             目標 PhotonImage（原地修改）
- * @param watermarkBuffer 浮水印 PNG 二進位資料
- * @param marginRatio     邊距比例（佔圖片寬度，預設 0.02）
- */
-export function applyWatermark(
-  img: PhotonImage,
-  watermarkBuffer: Uint8Array,
-  marginRatio = 0.02,
-): void {
-  const mark = PhotonImage.new_from_byteslice(watermarkBuffer)
-  const margin = Math.round(img.get_width() * marginRatio)
-  const x = BigInt(img.get_width() - mark.get_width() - margin)
-  const y = BigInt(img.get_height() - mark.get_height() - margin)
-  watermark(img, mark, x, y)
-  mark.free()
 }

@@ -15,12 +15,11 @@
  * 部署：wrangler deploy --config wrangler.image-service.toml
  */
 
-import { resizeToWidth, encodeJpeg, applyWatermark } from './lib/photon-helper'
+import { resizeToWidth, encodeJpeg } from './lib/photon-helper'
 
 export interface Env {
   BUCKET: R2Bucket
   R2_PUBLIC_URL: string
-  WATERMARK_ENABLED: string
 }
 
 // L2 快取的 R2 key 格式（.jpg：lossy JPEG）
@@ -94,15 +93,6 @@ export default {
 
       // Photon 影像處理
       const resized = resizeToWidth(originalBuffer, width)
-
-      // 浮水印（可選）
-      if (env.WATERMARK_ENABLED === 'true') {
-        const markObject = await env.BUCKET.get('assets/watermark.png')
-        if (markObject) {
-          const markBuffer = new Uint8Array(await markObject.arrayBuffer())
-          applyWatermark(resized, markBuffer)
-        }
-      }
 
       const webpBytes = encodeJpeg(resized, quality)
       resized.free()

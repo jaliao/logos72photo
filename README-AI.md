@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.48
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.49
 
 ---
 
@@ -134,7 +134,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.48**（本次）— cr-spec-260320-002：後台共用選單；新增 `app/admin/layout.tsx`（Server Component，讀 cookie 決定是否套用 Shell）與 `app/components/AdminNav.tsx`（側邊欄 + 手機版 hamburger）；移除 monitoring 頁 inline 導覽
+- **v0.1.49**（本次）— cr-spec-260320-004：移除照片縮圖浮水印；移除 `applyWatermark` 函式與 `WATERMARK_ENABLED` 設定；重新部署 Image Service Worker 後生效
+- **v0.1.48** — cr-spec-260320-002：後台共用選單；新增 `app/admin/layout.tsx`（Server Component，讀 cookie 決定是否套用 Shell）與 `app/components/AdminNav.tsx`（側邊欄 + 手機版 hamburger）；移除 monitoring 頁 inline 導覽
 - **v0.1.47** — cr-spec-260320-001：Gallery 相簿路由搬入後台；`/gallery/**` 移至 `/admin/gallery/**`（受 admin session 保護）；舊路徑 `/gallery/**` redirect 至 `/admin/login`；首頁時段格連結由 `/gallery/` 改為 `/admin/gallery/`
 - **v0.1.46** — cr-spec-260319-001：後台 `/admin/slot-passwords` 新增「列印明信片」功能；新增 `/admin/slot-passwords/postcard` 頁面，以 `public/postcard/2.png` 為底圖，CSS 絕對定位疊印每個時段的日期、時間、帳號/密碼；每頁一張（`page-break-after: always`）；`window.print()` 轉存 PDF；`/admin/slot-passwords` 加入「列印明信片」入口按鈕
 - **v0.1.45** — cr-spec-260317-005：登入頁密碼欄位預設明文顯示，眼睛按鈕切換隱藏/顯示

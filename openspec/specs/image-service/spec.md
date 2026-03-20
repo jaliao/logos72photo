@@ -49,20 +49,16 @@ Image Service Worker SHALL 提供 `GET /resizing/{width}/{quality}/{r2_key}` 路
 - **WHEN** quality=80
 - **THEN** 輸出 JPEG 品質 SHALL 對應 80%，檔案大小應明顯小於 quality=100
 
-### Requirement: 浮水印疊加
-若環境變數 `WATERMARK_ENABLED=true`，系統 SHALL 在輸出圖片右下角疊加 R2 `assets/watermark.png`。
+### Requirement: 縮圖不加浮水印
+Image Service SHALL 輸出不含浮水印的縮圖。浮水印合成邏輯已從程式碼中移除，不讀取 R2 `assets/watermark.png`。
 
-#### Scenario: 浮水印啟用
-- **WHEN** `WATERMARK_ENABLED=true` 且 `assets/watermark.png` 存在於 R2
-- **THEN** 輸出圖片右下角 SHALL 顯示浮水印，margin 為圖片寬度的 2%
+#### Scenario: 縮圖不含浮水印
+- **WHEN** 任何客戶端請求 `/resizing/{width}/{quality}/{r2Key}`
+- **THEN** Image Service SHALL 回傳不含浮水印的縮圖
 
-#### Scenario: 浮水印停用
-- **WHEN** `WATERMARK_ENABLED=false` 或未設定
-- **THEN** 輸出圖片 SHALL 不包含任何浮水印
-
-#### Scenario: 浮水印圖片不存在
-- **WHEN** `WATERMARK_ENABLED=true` 但 R2 `assets/watermark.png` 不存在
-- **THEN** 系統 SHALL 靜默略過浮水印，仍正常輸出縮圖
+#### Scenario: L2 快取鍵格式不變
+- **WHEN** Image Service 處理 cache miss 並寫入 L2 快取
+- **THEN** 系統 SHALL 以原有路徑格式 `thumbnails/{width}w_{quality}q/{r2Key}` 寫入無浮水印縮圖
 
 ### Requirement: 影像處理失敗降級
 影像處理失敗時，系統 SHALL 以 302 Redirect 至 R2 原圖公開 URL，確保前端不中斷。
