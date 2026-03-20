@@ -8,6 +8,8 @@
 
 'use client'
 
+export const runtime = 'edge'
+
 import { useState } from 'react'
 
 type RebuildResult = { date: string; slots: number[]; status: string }
