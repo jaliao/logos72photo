@@ -8,7 +8,7 @@
  *
  * 兩種模式：
  *   grid    — 縮圖網格（手機單欄、桌面雙欄）
- *   expand  — 展開卡片：提示框、下載（iOS 開新頁）、inline 二次確認刪除
+ *   expand  — 展開卡片：提示框、下載（iOS 開新頁）、modal 二次確認刪除
  */
 
 import { useState, useEffect } from 'react'
@@ -28,7 +28,7 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [downloading, setDownloading] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   // iOS 偵測（mount 後才能讀 navigator）
   const [ios, setIos] = useState(false)
@@ -85,7 +85,7 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
   const hasNext = activeIndex < totalCount - 1
 
   const resetExpandState = () => {
-    setConfirmingDelete(false)
+    setShowDeleteModal(false)
     setDeleteError(null)
   }
 
@@ -122,9 +122,9 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
         if (!res.ok) {
           const data = await res.json().catch(() => ({})) as { error?: string }
           setDeleteError(data.error ?? '刪除失敗，請稍後再試')
-          setConfirmingDelete(false)
           return
         }
+        setShowDeleteModal(false)
         setCoverUrl(undefined)
         setActiveIndex(null)
       } else {
@@ -136,15 +136,14 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
         if (!res.ok) {
           const data = await res.json().catch(() => ({})) as { error?: string }
           setDeleteError(data.error ?? '刪除失敗，請稍後再試')
-          setConfirmingDelete(false)
           return
         }
+        setShowDeleteModal(false)
         setPhotos(photos.filter((_, i) => i !== activeIndex - coverOffset))
         setActiveIndex(null)
       }
     } catch {
       setDeleteError('刪除失敗，請稍後再試')
-      setConfirmingDelete(false)
     } finally {
       setDeleting(false)
     }
@@ -182,66 +181,70 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
       </div>
 
       {/* 行銷使用說明 */}
-      <div className="mt-3 rounded-lg border border-black bg-white p-3 text-sm text-black">
+      <div className="mt-3 rounded-lg border border-black bg-white/70 p-3 text-sm font-semibold text-black">
         本照片用於活動行銷宣傳，如不同意請點「刪除」自行移除。
       </div>
 
       {/* iOS 下載說明（mount 後偵測到 iOS 即顯示） */}
       {ios && (
-        <div className="mt-2 rounded-lg border border-black bg-white p-3 text-sm text-black">
+        <div className="mt-2 rounded-lg border border-black bg-white/70 p-3 text-sm font-semibold text-black">
           iPhone 儲存照片：點「開啟照片」→ 在新頁長按圖片 → 選擇「儲存影像」
         </div>
       )}
 
       {/* 操作按鈕 */}
       <div className="mt-3 flex gap-3">
-        {!confirmingDelete ? (
-          <>
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex-1 rounded-lg bg-zinc-800 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-zinc-700"
-            >
-              {downloading ? '下載中…' : ios ? '開啟照片' : '下載'}
-            </button>
-            <button
-              onClick={() => setConfirmingDelete(true)}
-              className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-medium text-white hover:bg-red-600"
-            >
-              刪除
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => setConfirmingDelete(false)}
-              className="flex-1 rounded-lg bg-zinc-300 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-400"
-            >
-              取消
-            </button>
-            <button
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-              className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-bold text-white disabled:opacity-50 hover:bg-red-700"
-            >
-              {deleting ? '刪除中…' : '確定刪除'}
-            </button>
-          </>
-        )}
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="flex-1 rounded-lg bg-zinc-800 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-zinc-700"
+        >
+          {downloading ? '下載中…' : ios ? '開啟照片' : '下載'}
+        </button>
+        <button
+          onClick={() => { setDeleteError(null); setShowDeleteModal(true) }}
+          className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-medium text-white hover:bg-red-600"
+        >
+          刪除
+        </button>
       </div>
-
-      {/* 錯誤提示 */}
-      {deleteError && (
-        <p className="mt-2 text-center text-xs text-red-500">{deleteError}</p>
-      )}
 
       {/* 返回列表 */}
       <button
         onClick={goBack}
         className="mt-3 w-full rounded-lg bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
       >
-        ← 返回列表
+        返回列表
       </button>
+
+      {/* 刪除確認 Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6">
+            <p className="mb-1 text-base font-semibold text-zinc-900">確定要刪除這張照片嗎？</p>
+            <p className="mb-5 text-sm text-zinc-500">刪除後無法復原。</p>
+            {deleteError && (
+              <p className="mb-3 text-center text-xs text-red-500">{deleteError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteError(null) }}
+                disabled={deleting}
+                className="flex-1 rounded-lg bg-zinc-300 py-2 text-sm font-medium text-zinc-800 disabled:opacity-50 hover:bg-zinc-400"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-bold text-white disabled:opacity-50 hover:bg-red-700"
+              >
+                {deleting ? '刪除中…' : '確定刪除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
