@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.54
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.55
 
 ---
 

@@ -89,6 +89,21 @@ async function composeCover(photoBuffer: Buffer): Promise<Buffer> {
   return result
 }
 
+/**
+ * 預熱縮圖快取：呼叫 Image Service 觸發 640w/80q 與 1280w/85q L2 寫入
+ * fire-and-forget，失敗不影響主流程
+ */
+async function warmThumbnails(r2Url: string): Promise<void> {
+  const imageServiceUrl = (process.env.IMAGE_SERVICE_URL ?? '').replace(/\/$/, '')
+  if (!imageServiceUrl) return
+  const r2PublicUrl = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '')
+  const r2Key = r2Url.replace(r2PublicUrl + '/', '')
+  await Promise.all([
+    fetch(`${imageServiceUrl}/resizing/640/80/${r2Key}`),
+    fetch(`${imageServiceUrl}/resizing/1280/85/${r2Key}`),
+  ])
+}
+
 /** 上傳封面 buffer 至 R2 `covers/{slotGroup}.jpg` */
 async function uploadCover(r2: S3Client, slotGroup: string, buffer: Buffer): Promise<void> {
   await r2.send(new PutObjectCommand({
@@ -99,13 +114,22 @@ async function uploadCover(r2: S3Client, slotGroup: string, buffer: Buffer): Pro
   }))
 }
 
+/**
+ * 在 Firestore slotGroups/{slotGroup} 寫入封面存在 flag
+ * fire-and-forget，失敗不影響主流程
+ */
+async function setCoverFlag(slotGroup: string): Promise<void> {
+  const db = admin.firestore()
+  await db.collection('slotGroups').doc(slotGroup).set({ hasCover: true }, { merge: true })
+}
+
 // ─── Cloud Function ─────────────────────────────────────────────────────────
 
 /**
  * Firestore `photos/{docId}` onCreate 觸發器。
  * 條件：slotGroup 的第一張照片 → 合成封面並上傳 R2。
  */
-export const generateCover = onDocumentCreated({ document: 'photos/{docId}', region: 'asia-east1' }, async (event) => {
+export const generateCover = onDocumentCreated({ document: 'photos/{docId}', region: 'asia-east1', secrets: ['IMAGE_SERVICE_URL'] }, async (event) => {
   const data = event.data?.data()
   if (!data) return
 
@@ -140,6 +164,10 @@ export const generateCover = onDocumentCreated({ document: 'photos/{docId}', reg
     const coverBuffer = await composeCover(photoBuffer)
     await uploadCover(r2, slotGroup, coverBuffer)
     console.log(`generateCover: covers/${slotGroup}.jpg 上傳完成`)
+    // 預熱縮圖快取 + 寫入封面 flag（平行 fire-and-forget）
+    Promise.all([warmThumbnails(r2Url), setCoverFlag(slotGroup)]).catch((err) =>
+      console.warn('generateCover: 預熱或 flag 寫入失敗：', err),
+    )
   } catch (err) {
     // 下載或合成失敗：記錄錯誤，不拋出例外（避免重試風暴）
     console.error(`generateCover: 合成失敗（slotGroup=${slotGroup}）：`, err)

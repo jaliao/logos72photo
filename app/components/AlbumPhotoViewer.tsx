@@ -54,7 +54,7 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
             className="block w-full cursor-pointer overflow-hidden rounded-xl focus:outline-none"
           >
             <div className="relative aspect-[3/4] w-full">
-              <Image src={coverUrl} alt="封面" fill className="object-cover" sizes="(min-width: 640px) 50vw, 100vw" />
+              <Image src={coverUrl} alt="封面" fill className="object-cover" sizes="(min-width: 640px) 50vw, 100vw" priority />
             </div>
           </button>
         )}
@@ -65,7 +65,7 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
             className="block w-full cursor-pointer overflow-hidden rounded-xl focus:outline-none"
           >
             <div className="relative aspect-[3/4] w-full">
-              <Image src={toThumb640(photo.r2_url)} alt={`照片 ${i + 1}`} fill className="object-cover" sizes="(min-width: 640px) 50vw, 100vw" />
+              <Image src={toThumb640(photo.r2_url)} alt={`照片 ${i + 1}`} fill className="object-cover" sizes="(min-width: 640px) 50vw, 100vw" {...(coverOffset === 0 && i === 0 ? { priority: true } : {})} />
             </div>
           </button>
         ))}

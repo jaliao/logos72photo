@@ -10,7 +10,7 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
-import { getPhotosBySlotGroup } from '@/lib/firebase-rest'
+import { getPhotosBySlotGroup, getSlotGroupDoc } from '@/lib/firebase-rest'
 import GalleryBackground from '@/app/components/GalleryBackground'
 import GalleryHeading from '@/app/components/GalleryHeading'
 import AlbumPhotoViewer from '@/app/components/AlbumPhotoViewer'
@@ -42,9 +42,9 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
   const r2PublicUrl = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '')
   const coverUrl = `${r2PublicUrl}/covers/${slotGroup}.jpg`
 
-  const [photos, coverExists] = await Promise.all([
+  const [photos, { hasCover: coverExists }] = await Promise.all([
     getPhotosBySlotGroup(slotGroup),
-    fetch(coverUrl, { method: 'HEAD' }).then(r => r.ok).catch(() => false),
+    getSlotGroupDoc(slotGroup),
   ])
 
   const timeLabel = formatSlotGroupLabel(slotGroup)

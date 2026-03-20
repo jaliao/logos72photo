@@ -444,6 +444,27 @@ export async function queryPhotoByR2Url(r2Url: string): Promise<PhotoDocWithId |
 }
 
 /**
+ * Firestore REST：讀取 slotGroups/{slotGroup} 文件，回傳封面存在 flag
+ * 文件不存在（404）視為 { hasCover: false }
+ */
+export async function getSlotGroupDoc(slotGroup: string): Promise<{ hasCover: boolean }> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/slotGroups/${slotGroup}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+
+  if (res.status === 404 || !res.ok) return { hasCover: false }
+
+  const data = (await res.json()) as { fields?: Record<string, unknown> }
+  const fields = data.fields ?? {}
+  const hasCover = (fields.hasCover as { booleanValue?: boolean } | undefined)?.booleanValue === true
+  return { hasCover }
+}
+
+/**
  * Firestore REST：刪除指定集合中的文件
  * @param collection 集合路徑，例如 "photos"
  * @param docId      文件 ID

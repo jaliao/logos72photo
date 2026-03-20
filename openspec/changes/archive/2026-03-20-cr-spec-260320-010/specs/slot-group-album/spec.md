@@ -1,3 +1,18 @@
+## ADDED Requirements
+
+### Requirement: 封面存在 flag 寫入 Firestore
+`generateCover` Cloud Function 封面上傳成功後，SHALL 在 Firestore `slotGroups/{slotGroup}` 文件寫入 `{ hasCover: true }`。
+
+#### Scenario: 封面上傳成功寫入 flag
+- **WHEN** `generateCover` 成功上傳 `covers/{slotGroup}.jpg` 至 R2
+- **THEN** 系統 SHALL 在 Firestore `slotGroups/{slotGroup}` 寫入（merge）`{ hasCover: true }`
+
+#### Scenario: flag 寫入失敗不影響主流程
+- **WHEN** Firestore 寫入失敗
+- **THEN** `generateCover` SHALL 記錄 warning 但不拋出例外
+
+## MODIFIED Requirements
+
 ### Requirement: 個人時段相簿頁面
 系統 SHALL 提供 `/album/[slotGroup]` 獨立頁面，依 8 碼分組編號（MMDDHHSS）從 Firestore `photos` 集合查詢並展示照片，頁面顯示分組編號作為識別資訊。存取 `/album/**` 路由 SHALL 需持有有效 `album_session` cookie；未登入來賓 SHALL 被重導向至 `/album/login`。
 
@@ -27,16 +42,7 @@
 - **WHEN** 未持有有效 `album_session` cookie 的訪客進入任意 `/album/**`
 - **THEN** Middleware SHALL 重導向至 `/album/login`
 
-### Requirement: 封面存在 flag 寫入 Firestore
-`generateCover` Cloud Function 封面上傳成功後，SHALL 在 Firestore `slotGroups/{slotGroup}` 文件寫入 `{ hasCover: true }`。
-
-#### Scenario: 封面上傳成功寫入 flag
-- **WHEN** `generateCover` 成功上傳 `covers/{slotGroup}.jpg` 至 R2
-- **THEN** 系統 SHALL 在 Firestore `slotGroups/{slotGroup}` 寫入（merge）`{ hasCover: true }`
-
-#### Scenario: flag 寫入失敗不影響主流程
-- **WHEN** Firestore 寫入失敗
-- **THEN** `generateCover` SHALL 記錄 warning 但不拋出例外
+## ADDED Requirements
 
 ### Requirement: Grid 首圖優先載入
 `AlbumPhotoViewer` grid 模式 SHALL 對第一張圖（index 0，含封面）加上 `priority` prop，讓瀏覽器優先載入首屏圖片。
@@ -44,25 +50,3 @@
 #### Scenario: Grid 第一張圖優先載入
 - **WHEN** AlbumPhotoViewer 以 grid 模式顯示
 - **THEN** 第一張縮圖 SHALL 使用 `priority` prop，其餘縮圖不加
-
-### Requirement: 個人時段相簿頁面顯示分組編號
-頁面 SHALL 在明顯位置顯示當前分組號碼，讓訪客能識別自己的時段。
-
-#### Scenario: 頁面標題顯示分組號碼
-- **WHEN** 訪客進入任意有效的 `/album/[slotGroup]` 頁面
-- **THEN** 頁面 SHALL 顯示分組號碼（如 `03130101`）作為標題或副標題
-
-### Requirement: 個人時段相簿照片縮圖格
-相簿頁面的縮圖 grid SHALL 以直式比例（`aspect-[3/4]`）顯示，手機版單欄、桌面版雙欄，點擊縮圖開啟 Lightbox 全螢幕瀏覽。
-
-#### Scenario: 手機版單欄顯示
-- **WHEN** 訪客在手機（viewport < 640px）進入 `/album/[slotGroup]`
-- **THEN** 縮圖 grid SHALL 以單欄垂直排列
-
-#### Scenario: 桌面版雙欄顯示
-- **WHEN** 訪客在桌面（viewport ≥ 640px）進入 `/album/[slotGroup]`
-- **THEN** 縮圖 grid SHALL 以雙欄並排
-
-#### Scenario: 點擊縮圖開啟 Lightbox
-- **WHEN** 訪客點擊任意縮圖
-- **THEN** 系統 SHALL 以 Lightbox 全螢幕顯示原尺寸照片，支援左右切換
