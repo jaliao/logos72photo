@@ -10,7 +10,7 @@
  * 不依賴任何 Node.js 原生模組，可在 Cloudflare Workers Edge Runtime 執行。
  */
 
-import type { PhotoDoc, ErrorLogDoc } from './types'
+import type { PhotoDoc, PhotoDocWithId, ErrorLogDoc } from './types'
 
 /** 模組層級 access token 快取（每個 Worker instance 內有效） */
 let cachedToken: { value: string; expiresAt: number } | null = null
@@ -346,7 +346,7 @@ export async function queryPhotos(
  * Firestore REST：依 slot_group 查詢照片，依 timestamp 升冪排列
  * @param slotGroup 8 碼分組號碼（MMDDHHSS），格式不符時回傳空陣列
  */
-export async function getPhotosBySlotGroup(slotGroup: string): Promise<PhotoDoc[]> {
+export async function getPhotosBySlotGroup(slotGroup: string): Promise<PhotoDocWithId[]> {
   if (!/^\d{8}$/.test(slotGroup)) return []
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
@@ -382,10 +382,87 @@ export async function getPhotosBySlotGroup(slotGroup: string): Promise<PhotoDoc[
     throw new Error(`Firestore getPhotosBySlotGroup 失敗：${res.status} ${await res.text()}`)
   }
 
-  const rows = (await res.json()) as Array<{ document?: { fields: Record<string, unknown> } }>
+  const rows = (await res.json()) as Array<{ document?: { name: string; fields: Record<string, unknown> } }>
   return rows
     .filter((r) => r.document)
-    .map((r) => parseFirestoreFields(r.document!.fields) as unknown as PhotoDoc)
+    .map((r) => {
+      const docId = r.document!.name.split('/').pop() ?? ''
+      return {
+        ...(parseFirestoreFields(r.document!.fields) as unknown as PhotoDoc),
+        docId,
+      }
+    })
+}
+
+/**
+ * Firestore REST：依 r2_url 查詢單一照片文件，回傳含 docId 的結構
+ * @returns PhotoDocWithId 或 null（查無結果）
+ */
+export async function queryPhotoByR2Url(r2Url: string): Promise<PhotoDocWithId | null> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: 'photos' }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'r2_url' },
+          op: 'EQUAL',
+          value: { stringValue: r2Url },
+        },
+      },
+      limit: 1,
+    },
+  }
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore queryPhotoByR2Url 失敗：${res.status} ${await res.text()}`)
+  }
+
+  const rows = (await res.json()) as Array<{ document?: { name: string; fields: Record<string, unknown> } }>
+  const first = rows.find((r) => r.document)
+  if (!first?.document) return null
+
+  const docId = first.document.name.split('/').pop() ?? ''
+  return {
+    ...(parseFirestoreFields(first.document.fields) as unknown as PhotoDoc),
+    docId,
+  }
+}
+
+/**
+ * Firestore REST：刪除指定集合中的文件
+ * @param collection 集合路徑，例如 "photos"
+ * @param docId      文件 ID
+ */
+export async function deleteFirestoreDoc(collection: string, docId: string): Promise<void> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collection}/${docId}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error(`Firestore deleteFirestoreDoc 失敗：${res.status} ${await res.text()}`)
+  }
 }
 
 /**

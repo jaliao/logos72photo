@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 個人時段相簿頁
- * 2026-03-15
+ * 2026-03-15 (Updated: 2026-03-20)
  * app/album/[slotGroup]/page.tsx
  * ----------------------------------------------
  */
@@ -10,12 +10,10 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { getPhotosBySlotGroup } from '@/lib/firebase-rest'
-import { toThumb640, toThumb1280 } from '@/lib/image'
 import GalleryBackground from '@/app/components/GalleryBackground'
 import GalleryHeading from '@/app/components/GalleryHeading'
-import PhotoSlideshow, { type SlideshowPhoto } from '@/app/components/PhotoSlideshow'
+import AlbumPhotoViewer from '@/app/components/AlbumPhotoViewer'
 
 interface Params {
   params: Promise<{ slotGroup: string }>
@@ -45,32 +43,10 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
   const r2PublicUrl = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '')
   const coverUrl = `${r2PublicUrl}/covers/${slotGroup}.jpg`
 
-  // 並行查詢：Firestore 照片 + 封面存在性確認
   const [photos, coverExists] = await Promise.all([
     getPhotosBySlotGroup(slotGroup),
     fetch(coverUrl, { method: 'HEAD' }).then(r => r.ok).catch(() => false),
   ])
-
-  const coverPhoto: SlideshowPhoto | null = coverExists
-    ? {
-        r2Url: coverUrl,
-        thumbUrl: coverUrl,
-        slideUrl: coverUrl,
-        alt: '封面',
-        filename: 'COVER.jpg',
-      }
-    : null
-
-  const slideshowPhotos: SlideshowPhoto[] = [
-    ...(coverPhoto ? [coverPhoto] : []),
-    ...photos.map((photo, index) => ({
-      r2Url: photo.r2_url,
-      thumbUrl: toThumb640(photo.r2_url),
-      slideUrl: toThumb1280(photo.r2_url),
-      alt: `${photo.device_id} @ ${new Date(photo.timestamp).toLocaleTimeString('zh-TW')}`,
-      filename: `IMG_${String(index + 1).padStart(4, '0')}.jpg`,
-    })),
-  ]
 
   const timeLabel = formatSlotGroupLabel(slotGroup)
 
@@ -84,14 +60,6 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
       `}</style>
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-2xl">
-        <Link
-          href="/"
-          className="text-sm text-white/70 hover:text-white"
-          style={{ textShadow: '0 1px 8px rgba(0,0,0,1)' }}
-        >
-          ← 返回
-        </Link>
-
         <GalleryHeading subtitle={`${timeLabel}`} headingClassName="mt-4" subtitleClassName="mb-3 text-sm" />
 
         {photos.length === 0 ? (
@@ -105,7 +73,7 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
               opacity: 0,
             }}
           >
-            <PhotoSlideshow photos={slideshowPhotos} />
+            <AlbumPhotoViewer initialPhotos={photos} coverUrl={coverExists ? coverUrl : undefined} />
           </div>
         )}
       </div>

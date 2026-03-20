@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.49
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.50
 
 ---
 
@@ -55,6 +55,13 @@ Image Service Worker (logos72photo-image)
             ├── 左右箭頭 / 鍵盤方向鍵 / Swipe 切換
             ├── 下載：fetch(r2Url) → Blob → Web Share API (iOS) / <a download> (其他)
             └── 分享：Clipboard API 複製 ?photo={index} 連結
+
+訪客相簿頁 (/album/[slotGroup])
+    └── Firestore 查詢（回傳含 docId 的 PhotoDocWithId[]）→ AlbumPhotoViewer 元件
+            ├── Grid 模式：格狀縮圖（手機單欄 / 桌機雙欄，aspect-[3/4]）
+            ├── Expand 模式：白色圓角卡片，點擊縮圖展開（非全螢幕 overlay）
+            ├── 下載：fetch(r2Url) → Blob → <a download>（不使用 Web Share API）
+            └── 刪除：DELETE /api/album/photos（album_session 驗證 + slot_group 比對），本地 state 移除
 ```
 
 ---
@@ -134,7 +141,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.49**（本次）— cr-spec-260320-004：移除照片縮圖浮水印；移除 `applyWatermark` 函式與 `WATERMARK_ENABLED` 設定；重新部署 Image Service Worker 後生效
+- **v0.1.50**（本次）— cr-spec-260320-005：個人相簿單張照片改用 `AlbumPhotoViewer`；以白色圓角卡片取代全螢幕 overlay；移除分享功能；加入說明文字「本照片可能用於活動行銷，如不同意請點刪除」；新增 `DELETE /api/album/photos`（`r2_url` 識別 + `album_session` + `slot_group` 授權驗證）；`getPhotosBySlotGroup()` 改回傳 `PhotoDocWithId[]`（含 docId）
+- **v0.1.49** — cr-spec-260320-004：移除照片縮圖浮水印；移除 `applyWatermark` 函式與 `WATERMARK_ENABLED` 設定；重新部署 Image Service Worker 後生效
 - **v0.1.48** — cr-spec-260320-002：後台共用選單；新增 `app/admin/layout.tsx`（Server Component，讀 cookie 決定是否套用 Shell）與 `app/components/AdminNav.tsx`（側邊欄 + 手機版 hamburger）；移除 monitoring 頁 inline 導覽
 - **v0.1.47** — cr-spec-260320-001：Gallery 相簿路由搬入後台；`/gallery/**` 移至 `/admin/gallery/**`（受 admin session 保護）；舊路徑 `/gallery/**` redirect 至 `/admin/login`；首頁時段格連結由 `/gallery/` 改為 `/admin/gallery/`
 - **v0.1.46** — cr-spec-260319-001：後台 `/admin/slot-passwords` 新增「列印明信片」功能；新增 `/admin/slot-passwords/postcard` 頁面，以 `public/postcard/2.png` 為底圖，CSS 絕對定位疊印每個時段的日期、時間、帳號/密碼；每頁一張（`page-break-after: always`）；`window.print()` 轉存 PDF；`/admin/slot-passwords` 加入「列印明信片」入口按鈕

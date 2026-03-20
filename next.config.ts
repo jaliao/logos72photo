@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.pages.dev',
       },
+      {
+        protocol: 'https',
+        hostname: '*.workers.dev',
+      },
     ],
   },
 }

@@ -24,6 +24,9 @@ export interface PhotoDoc {
   slot_group?: string
 }
 
+/** Firestore `photos` 集合的文件結構，含 Firestore 文件 ID */
+export type PhotoDocWithId = PhotoDoc & { docId: string }
+
 /** Firestore `devices` 集合的文件結構（裝置心跳狀態） */
 export interface DeviceDoc {
   /** 裝置 ID */
