@@ -19,17 +19,16 @@ interface Params {
   params: Promise<{ slotGroup: string }>
 }
 
-/** 將 8 碼分組號碼解析為可讀時段說明，例如 "03130103" → "03/13 01:30–01:44" */
+/** 將 8 碼分組號碼解析為可讀時段說明，例如 "03130103" → "03/13 01:30" */
 function formatSlotGroupLabel(sg: string): string {
   const mm = sg.slice(0, 2)
   const dd = sg.slice(2, 4)
   const hh = parseInt(sg.slice(4, 6), 10)
   const ss = parseInt(sg.slice(6, 8), 10) // 1–4
   const startMin = (ss - 1) * 15
-  const endMin = startMin + 14
   const fmt = (h: number, m: number) =>
     `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-  return `${mm}/${dd} ${fmt(hh, startMin)}–${fmt(hh, endMin)}`
+  return `${mm}/${dd} ${fmt(hh, startMin)}`
 }
 
 export default async function SlotGroupAlbumPage({ params }: Params) {
@@ -51,7 +50,7 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
   const timeLabel = formatSlotGroupLabel(slotGroup)
 
   return (
-    <main className="relative min-h-screen px-4 py-8">
+    <main className="relative min-h-screen px-4 py-4 md:py-8">
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(8px); }
@@ -60,7 +59,15 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
       `}</style>
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-2xl">
-        <GalleryHeading subtitle={`${timeLabel}`} headingClassName="mt-4" subtitleClassName="mb-3 text-sm" />
+        <GalleryHeading
+          subtitle={
+            <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-sm font-medium backdrop-blur-sm">
+              {timeLabel}
+            </span>
+          }
+          headingClassName="mt-4"
+          subtitleClassName="mb-3"
+        />
 
         {photos.length === 0 ? (
           <p className="text-center text-zinc-400">此時段尚無照片</p>

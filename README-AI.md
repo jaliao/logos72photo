@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.50
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.52
 
 ---
 
@@ -141,7 +141,9 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.50**（本次）— cr-spec-260320-005：個人相簿單張照片改用 `AlbumPhotoViewer`；以白色圓角卡片取代全螢幕 overlay；移除分享功能；加入說明文字「本照片可能用於活動行銷，如不同意請點刪除」；新增 `DELETE /api/album/photos`（`r2_url` 識別 + `album_session` + `slot_group` 授權驗證）；`getPhotosBySlotGroup()` 改回傳 `PhotoDocWithId[]`（含 docId）
+- **v0.1.52**（本次）— cr-spec-260320-007：AlbumPhotoViewer 展開模式 UX 重設計；黃底提示區塊（amber）顯示行銷使用說明；iOS 下載改開新頁 + 長按說明；刪除改為 inline 二次確認（取消/確定刪除）；封面套用相同設計
+- **v0.1.51** — cr-spec-260320-006：封面照片可刪除；新增 `DELETE /api/album/cover`（從 session 推導 key，不接受前端傳路徑）；`lib/r2.ts` 新增 `deleteR2Object()`；`AlbumPhotoViewer` coverUrl 轉為 state，封面展開加刪除按鈕
+- **v0.1.50** — cr-spec-260320-005：個人相簿單張照片改用 `AlbumPhotoViewer`；以白色圓角卡片取代全螢幕 overlay；移除分享功能；加入說明文字「本照片可能用於活動行銷，如不同意請點刪除」；新增 `DELETE /api/album/photos`（`r2_url` 識別 + `album_session` + `slot_group` 授權驗證）；`getPhotosBySlotGroup()` 改回傳 `PhotoDocWithId[]`（含 docId）
 - **v0.1.49** — cr-spec-260320-004：移除照片縮圖浮水印；移除 `applyWatermark` 函式與 `WATERMARK_ENABLED` 設定；重新部署 Image Service Worker 後生效
 - **v0.1.48** — cr-spec-260320-002：後台共用選單；新增 `app/admin/layout.tsx`（Server Component，讀 cookie 決定是否套用 Shell）與 `app/components/AdminNav.tsx`（側邊欄 + 手機版 hamburger）；移除 monitoring 頁 inline 導覽
 - **v0.1.47** — cr-spec-260320-001：Gallery 相簿路由搬入後台；`/gallery/**` 移至 `/admin/gallery/**`（受 admin session 保護）；舊路徑 `/gallery/**` redirect 至 `/admin/login`；首頁時段格連結由 `/gallery/` 改為 `/admin/gallery/`

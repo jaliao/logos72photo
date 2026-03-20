@@ -6,7 +6,7 @@
  * ----------------------------------------------
  */
 
-import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 /** R2 S3 相容客戶端 */
 export const r2 = new S3Client({
@@ -35,6 +35,19 @@ export async function uploadToR2(key: string, body: Uint8Array): Promise<string>
 
   const publicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, '')
   return `${publicUrl}/${key}`
+}
+
+/**
+ * 刪除 R2 中單一物件
+ * @param key 物件路徑，例如 "covers/03152002.jpg"
+ */
+export async function deleteR2Object(key: string): Promise<void> {
+  await r2.send(
+    new DeleteObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+    }),
+  )
 }
 
 /**
