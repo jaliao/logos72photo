@@ -64,7 +64,7 @@ export default function GalleryDateList({ dateList }: Props) {
             <div className="grid grid-cols-3 gap-2">
               {SLOTS.map((slot) => {
                 const hasPhotos = slots.has(slot.value)
-                const href = `/gallery/${date}/${slot.value}`
+                const href = `/admin/gallery/${date}/${slot.value}`
                 return (
                   <div
                     key={slot.value}

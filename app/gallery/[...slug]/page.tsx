@@ -1,13 +1,13 @@
 /*
  * ----------------------------------------------
- * 前台首頁：redirect 至個人相簿登入頁
+ * /gallery/** 舊路徑 redirect → /admin/login
  * 2026-03-20
- * app/page.tsx
+ * app/gallery/[...slug]/page.tsx
  * ----------------------------------------------
  */
 
 import { redirect } from 'next/navigation'
 
-export default function HomePage() {
-  redirect('/album/login')
+export default function GalleryRedirect() {
+  redirect('/admin/login')
 }

@@ -1,8 +1,8 @@
 /*
  * ----------------------------------------------
- * 1 小時子相簿列表頁（依 8 小時時段）
- * 2026-02-21 (Updated: 2026-03-12)
- * app/gallery/[date]/[slot]/page.tsx
+ * 後台：1 小時子相簿列表頁（依 8 小時時段）
+ * 2026-03-20
+ * app/admin/gallery/[date]/[slot]/page.tsx
  * ----------------------------------------------
  */
 
@@ -91,7 +91,7 @@ export default async function SlotPage({ params }: Params) {
                 return (
                   <Link
                     key={albumMin}
-                    href={`/gallery/${date}/${slot}/${albumMin}`}
+                    href={`/admin/gallery/${date}/${slot}/${albumMin}`}
                     className="relative overflow-hidden rounded-xl aspect-square"
                   >
                     <Image

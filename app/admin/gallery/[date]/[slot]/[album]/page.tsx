@@ -1,8 +1,8 @@
 /*
  * ----------------------------------------------
- * 1 小時相簿照片預覽與下載頁
- * 2026-02-21 (Updated: 2026-03-08)
- * app/gallery/[date]/[slot]/[album]/page.tsx
+ * 後台：1 小時相簿照片預覽與下載頁
+ * 2026-03-20
+ * app/admin/gallery/[date]/[slot]/[album]/page.tsx
  * ----------------------------------------------
  */
 
@@ -73,7 +73,7 @@ export default async function AlbumPage({ params }: Params) {
       <GalleryBackground />
       <div className="relative z-10 mx-auto max-w-2xl">
         <Link
-          href={`/gallery/${date}/${slot}`}
+          href={`/admin/gallery/${date}/${slot}`}
           className="text-sm text-white/70 hover:text-white"
           style={{ textShadow: '0 1px 8px rgba(0,0,0,1)' }}
         >
