@@ -15,7 +15,6 @@ import { ThumbnailImage } from '@/components/ThumbnailImage'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { HEARTBEAT_INTERVAL_MS, OFFLINE_THRESHOLD_MS } from '@/lib/constants'
-import { logoutAction } from '@/app/admin/login/actions'
 import type { DeviceDoc } from '@/lib/types'
 import { toThumb640 } from '@/lib/image'
 
@@ -85,45 +84,9 @@ export default function MonitoringPage() {
     <main className="min-h-screen bg-zinc-900 p-6 text-white">
       <div className="mx-auto max-w-4xl">
         {/* 標題列 */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="mb-2 text-2xl font-bold">監控儀表板</h1>
-            <p className="text-sm text-zinc-400">讀經接力相機系統狀態</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="/admin/slot-passwords"
-              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
-            >
-              密碼查詢
-            </a>
-            <a
-              href="/admin/rebuild-first-photos"
-              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
-            >
-              封面索引
-            </a>
-            <a
-              href="/admin/rebuild-first-photos"
-              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
-            >
-              封面索引
-            </a>
-            <a
-              href="/admin/errors"
-              className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
-            >
-              錯誤日誌
-            </a>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-600"
-              >
-                登出
-              </button>
-            </form>
-          </div>
+        <div className="mb-8">
+          <h1 className="mb-2 text-2xl font-bold">監控儀表板</h1>
+          <p className="text-sm text-zinc-400">讀經接力相機系統狀態</p>
         </div>
 
         {loading ? (
