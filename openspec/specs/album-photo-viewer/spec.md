@@ -1,3 +1,14 @@
+### Requirement: 空白時段提示樣式
+當時段無照片時，系統 SHALL 顯示半透明白底圓角容器（`rounded-lg bg-white/70 px-4 py-3`），內含粗體黑字（`font-semibold text-black text-center`）提示「此時段尚無照片」。不使用裸文字 `text-zinc-400` 樣式。
+
+#### Scenario: 無照片時顯示提示
+- **WHEN** 時段內照片列表為空（`totalCount === 0`）
+- **THEN** 系統 SHALL 顯示「此時段尚無照片」，樣式為 `rounded-lg bg-white/70 px-4 py-3 font-semibold text-black text-center`
+
+#### Scenario: 無照片時不顯示 grid 或展開卡片
+- **WHEN** 時段內照片列表為空
+- **THEN** grid 與展開卡片 SHALL 不顯示
+
 ### Requirement: 單張照片展開卡片
 `AlbumPhotoViewer` 元件 SHALL 提供「單頁展開」模式：點擊縮圖後，grid 隱藏，以白色圓角卡片顯示單張照片，卡片包含照片（`aspect-[3/4]` 全寬）、提示區塊（`bg-white/70 font-semibold text-black`）、下載與刪除按鈕（橫排等寬）、左右切換箭頭與「返回列表」按鈕。封面展開時同樣顯示「下載」與「刪除」按鈕。
 

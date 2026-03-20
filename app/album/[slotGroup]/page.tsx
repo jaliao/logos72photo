@@ -70,7 +70,7 @@ export default async function SlotGroupAlbumPage({ params }: Params) {
         />
 
         {photos.length === 0 ? (
-          <p className="text-center text-zinc-400">此時段尚無照片</p>
+          <div className="rounded-lg bg-white/70 px-4 py-3 text-center font-semibold text-black">此時段尚無照片</div>
         ) : (
           <div
             className="rounded-2xl bg-white/50 p-5"

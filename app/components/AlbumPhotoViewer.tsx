@@ -43,7 +43,7 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
 
   if (activeIndex === null) {
     if (totalCount === 0) {
-      return <p className="text-center text-zinc-400">此時段尚無照片</p>
+      return <div className="rounded-lg bg-white/70 px-4 py-3 text-center font-semibold text-black">此時段尚無照片</div>
     }
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
