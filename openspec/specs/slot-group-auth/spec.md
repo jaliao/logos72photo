@@ -70,3 +70,10 @@
 #### Scenario: 軟鍵盤收起後頁面恢復正常
 - **WHEN** 使用者完成輸入並關閉手機軟鍵盤
 - **THEN** 頁面 SHALL 恢復至原始縮放比例，橫向捲軸 SHALL 不存在
+
+### Requirement: 登入視窗不透明白色背景
+`/album/login` 登入卡片容器 SHALL 使用完全不透明白色背景（`bg-white`），不使用半透明樣式（如 `bg-white/50`），確保輸入欄位文字在任何背景圖下均清晰可讀。
+
+#### Scenario: 登入卡片背景不透明
+- **WHEN** 使用者進入 `/album/login`
+- **THEN** 登入卡片 SHALL 以不透明白色背景顯示，不透出後方背景圖

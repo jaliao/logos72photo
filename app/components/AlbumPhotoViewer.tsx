@@ -46,7 +46,14 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
       return <div className="rounded-lg bg-white/70 px-4 py-3 text-center font-semibold text-black">此時段尚無照片</div>
     }
     return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="flex flex-col gap-3">
+        {/* 授權說明橫幅 */}
+        <div className="rounded-lg border border-black bg-white/70 p-3 text-sm font-semibold text-black">
+          <p>各位家人平安！</p>
+          <p className="mt-1">本相簿記錄了活動的精彩點滴，照片將用於後續回顧與宣傳。</p>
+          <p className="mt-1">若您不希望個人影像被公開使用，歡迎您直接點選該照片並執行「刪除」。再次感謝家人們的參與與配合。</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {coverUrl && (
           <button
             key="__cover__"
@@ -69,6 +76,7 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
             </div>
           </button>
         ))}
+        </div>
       </div>
     )
   }
@@ -180,9 +188,11 @@ export default function AlbumPhotoViewer({ initialPhotos, coverUrl: initialCover
         ))}
       </div>
 
-      {/* 行銷使用說明 */}
+      {/* 授權說明 */}
       <div className="mt-3 rounded-lg border border-black bg-white/70 p-3 text-sm font-semibold text-black">
-        本照片用於活動行銷宣傳，如不同意請點「刪除」自行移除。
+        <p>各位家人平安！</p>
+        <p className="mt-1">本相簿記錄了活動的精彩點滴，照片將用於後續回顧與宣傳。</p>
+        <p className="mt-1">若您不希望個人影像被公開使用，歡迎您直接點選該照片並執行「刪除」。再次感謝家人們的參與與配合。</p>
       </div>
 
       {/* iOS 下載說明（mount 後偵測到 iOS 即顯示） */}

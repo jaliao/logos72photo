@@ -59,7 +59,7 @@ export default function AlbumLoginPage() {
       `}</style>
       <GalleryBackground />
       <div
-        className="relative z-10 w-full max-w-sm rounded-2xl bg-white/50 p-8"
+        className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-8"
         style={{
           boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
           animation: 'fadeIn 300ms ease-out forwards',

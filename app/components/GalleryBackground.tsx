@@ -18,6 +18,15 @@ export default function GalleryBackground() {
             background-position: 100% 50%;
           }
         }
+        /* 響應式背景圖：手機版 / 桌機版 */
+        .gallery-bg {
+          background-image: url(/bg/bg-mb-1.png);
+        }
+        @media (min-width: 640px) {
+          .gallery-bg {
+            background-image: url(/bg/bg-pc-1.png);
+          }
+        }
       `}</style>
 
       {/* 固定全視窗容器 */}
@@ -28,14 +37,15 @@ export default function GalleryBackground() {
           zIndex: 0,
         }}
       >
-        {/* 背景圖層 */}
+        {/* 背景圖層（手機：bg-mb-1.png / 桌機：bg-pc-1.png，由 CSS media query 切換） */}
         <div
+          className="gallery-bg"
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: `url(/bg/1.png)`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            opacity: 0.1,
           }}
         />
 
