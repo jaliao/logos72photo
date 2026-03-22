@@ -32,7 +32,7 @@ export default async function AdminHomePage() {
 
   return (
     <main className="relative min-h-screen px-4 py-8">
-      <GalleryBackground />
+      <GalleryBackground bgSrc="/bg/album/1.png" />
       <div className="relative z-10 mx-auto max-w-lg">
         {/* 標題 */}
         <GalleryHeading subtitle="讀經側拍相簿" subtitleClassName="mb-8 text-sm font-bold" />
