@@ -57,7 +57,7 @@ export default function AlbumLoginPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <GalleryBackground />
+      <GalleryBackground bgSrc="/bg/album/1.png" />
       <div
         className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-8"
         style={{

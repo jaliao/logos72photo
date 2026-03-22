@@ -5,7 +5,12 @@
  * ----------------------------------------------
  */
 
-export default function GalleryBackground() {
+interface Props {
+  /** 指定靜態背景圖路徑；傳入時不套用響應式切換。未傳入則依 viewport 自動切換手機/桌機版 */
+  bgSrc?: string
+}
+
+export default function GalleryBackground({ bgSrc }: Props) {
   return (
     <>
       <style>{`
@@ -18,7 +23,7 @@ export default function GalleryBackground() {
             background-position: 100% 50%;
           }
         }
-        /* 響應式背景圖：手機版 / 桌機版 */
+        /* 響應式背景圖：手機版 / 桌機版（未傳入 bgSrc 時套用） */
         .gallery-bg {
           background-image: url(/bg/bg-mb-1.png);
         }
@@ -37,15 +42,15 @@ export default function GalleryBackground() {
           zIndex: 0,
         }}
       >
-        {/* 背景圖層（手機：bg-mb-1.png / 桌機：bg-pc-1.png，由 CSS media query 切換） */}
+        {/* 背景圖層：bgSrc 傳入時使用靜態圖，否則以 CSS media query 響應式切換 */}
         <div
-          className="gallery-bg"
+          className={bgSrc ? undefined : 'gallery-bg'}
           style={{
             position: 'absolute',
             inset: 0,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.1,
+            ...(bgSrc ? { backgroundImage: `url(${bgSrc})` } : {}),
           }}
         />
 
@@ -72,8 +77,6 @@ export default function GalleryBackground() {
             /* 8. 可選：加上 will-change 提升動畫性能（性能優化） */
             willChange: 'background-position',
             /* 9. 可選：加上 mask-image 讓漸層在底部逐漸淡出，避免畫面下方過於突兀（視覺調整） */
-            // -webkit-mask-image: 'linear-gradient(to bottom, black 85%, transparent 100%)',
-            // mask-image: 'linear-gradient(to bottom, black 85%, transparent 100%)',
             maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
           }}
