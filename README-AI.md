@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.55
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.56
 
 ---
 
@@ -141,7 +141,11 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.52**（本次）— cr-spec-260320-007：AlbumPhotoViewer 展開模式 UX 重設計；黃底提示區塊（amber）顯示行銷使用說明；iOS 下載改開新頁 + 長按說明；刪除改為 inline 二次確認（取消/確定刪除）；封面套用相同設計
+- **v0.1.56**（本次）— cr-fix-260320-002：修正手機登入頁 input auto-zoom；`app/globals.css` 全域 `input/select/textarea { font-size: max(16px, 1em) }`；`/album/login` 與 `/admin/login` 所有 `<input>` 從 `text-sm`（14px）改為 `text-base`（16px），防止 iOS Safari 在點擊輸入欄時自動放大頁面產生橫向捲軸
+- **v0.1.55** — cr-spec-260320-010：效能優化（縮圖預熱、封面 flag、首圖 priority）
+- **v0.1.54** — cr-spec-260320-009：空白時段提示樣式改善
+- **v0.1.53** — cr-spec-260320-008：單張相簿 UI 改善（半透明提示、刪除 modal、cookie path 修正）
+- **v0.1.52** — cr-spec-260320-007：AlbumPhotoViewer 展開模式 UX 重設計；黃底提示區塊（amber）顯示行銷使用說明；iOS 下載改開新頁 + 長按說明；刪除改為 inline 二次確認（取消/確定刪除）；封面套用相同設計
 - **v0.1.51** — cr-spec-260320-006：封面照片可刪除；新增 `DELETE /api/album/cover`（從 session 推導 key，不接受前端傳路徑）；`lib/r2.ts` 新增 `deleteR2Object()`；`AlbumPhotoViewer` coverUrl 轉為 state，封面展開加刪除按鈕
 - **v0.1.50** — cr-spec-260320-005：個人相簿單張照片改用 `AlbumPhotoViewer`；以白色圓角卡片取代全螢幕 overlay；移除分享功能；加入說明文字「本照片可能用於活動行銷，如不同意請點刪除」；新增 `DELETE /api/album/photos`（`r2_url` 識別 + `album_session` + `slot_group` 授權驗證）；`getPhotosBySlotGroup()` 改回傳 `PhotoDocWithId[]`（含 docId）
 - **v0.1.49** — cr-spec-260320-004：移除照片縮圖浮水印；移除 `applyWatermark` 函式與 `WATERMARK_ENABLED` 設定；重新部署 Image Service Worker 後生效

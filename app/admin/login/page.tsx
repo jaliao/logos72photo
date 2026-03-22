@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: Props) {
               type="password"
               required
               autoFocus
-              className="w-full rounded-lg bg-zinc-700 px-3 py-2.5 text-sm text-white placeholder-zinc-500 outline-none ring-1 ring-zinc-600 focus:ring-blue-500"
+              className="w-full rounded-lg bg-zinc-700 px-3 py-2.5 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-zinc-600 focus:ring-blue-500"
               placeholder="輸入管理員密碼"
             />
           </div>

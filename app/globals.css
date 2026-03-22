@@ -29,3 +29,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* 防止 iOS Safari 在 font-size < 16px 的輸入欄位 focus 時自動放大頁面 */
+input,
+select,
+textarea {
+  font-size: max(16px, 1em);
+}
