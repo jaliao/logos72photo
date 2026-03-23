@@ -6,8 +6,8 @@
 
 ## 2. Album 頁傳入專屬背景
 
-- [x] 2.1 `app/album/login/page.tsx`：`<GalleryBackground>` 加入 `bgSrc="/bg/album/1.png"`
-- [x] 2.2 `app/album/[slotGroup]/page.tsx`：`<GalleryBackground>` 加入 `bgSrc="/bg/album/1.png"`
+- [x] 2.1 `app/album/login/page.tsx`：`<GalleryBackground>` 加入 `bgSrc="/bg/album/1.jpg"`
+- [x] 2.2 `app/album/[slotGroup]/page.tsx`：`<GalleryBackground>` 加入 `bgSrc="/bg/album/1.jpg"`
 
 ## 3. 版本與文件更新
 

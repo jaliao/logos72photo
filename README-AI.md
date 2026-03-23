@@ -141,7 +141,7 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.59**（本次）— cr-spec-260322-003：`GalleryBackground` 加入 `bgSrc` prop；album 頁改用 `/bg/album/1.png`；移除背景圖層 `opacity: 0.1`
+- **v0.1.59**（本次）— cr-spec-260322-003：`GalleryBackground` 加入 `bgSrc` prop；album 頁改用 `/bg/album/1.jpg`；移除背景圖層 `opacity: 0.1`
 - **v0.1.58** — cr-spec-260322-002：響應式背景圖；`GalleryBackground` 改依 viewport 寬度切換背景（手機 `bg-mb-1.png` / 桌機 `bg-pc-1.png`），使用 CSS `@media (min-width: 640px)`
 - **v0.1.57** — cr-spec-260322-001：更新個人相簿授權說明文字；grid 模式頂部加入三段授權橫幅；expand 模式說明文字從單行改為三段友善版本
 - **v0.1.56** — cr-fix-260320-002：修正手機登入頁 input auto-zoom；`app/globals.css` 全域 `input/select/textarea { font-size: max(16px, 1em) }`；`/album/login` 與 `/admin/login` 所有 `<input>` 從 `text-sm`（14px）改為 `text-base`（16px），防止 iOS Safari 在點擊輸入欄時自動放大頁面產生橫向捲軸

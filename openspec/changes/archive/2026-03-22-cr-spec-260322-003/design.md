@@ -5,13 +5,13 @@
 - 所有頁面共用相同的響應式背景（`bg-mb-1.png` / `bg-pc-1.png`）
 - album 頁（`/album/login`、`/album/[slotGroup]`）與 admin 頁使用同一張背景
 
-已備妥 `public/bg/album/1.png` 作為相簿專屬背景。
+已備妥 `public/bg/album/1.jpg` 作為相簿專屬背景。
 
 ## Goals / Non-Goals
 
 **Goals:**
 - 移除 `opacity: 0.1`，背景圖恢復完整顯示
-- album 頁使用 `/bg/album/1.png`，admin 頁維持響應式背景不變
+- album 頁使用 `/bg/album/1.jpg`，admin 頁維持響應式背景不變
 
 **Non-Goals:**
 - 不修改漸層動畫覆蓋層
@@ -36,4 +36,4 @@
 ## Risks / Trade-offs
 
 - **prop 介面增加**：`bgSrc` 為可選，向下相容，既有呼叫端無需修改。
-- **album 背景無響應式**：`/bg/album/1.png` 在手機與桌機使用同一張圖，若日後需要分版需另外處理。
+- **album 背景無響應式**：`/bg/album/1.jpg` 在手機與桌機使用同一張圖，若日後需要分版需另外處理。

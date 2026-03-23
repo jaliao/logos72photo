@@ -16,8 +16,8 @@
 - **THEN** 系統 SHALL 顯示 `/bg/bg-pc-1.png`
 
 #### Scenario: 傳入 bgSrc 時使用指定背景
-- **WHEN** 呼叫端傳入 `bgSrc="/bg/album/1.png"`
-- **THEN** 系統 SHALL 顯示 `/bg/album/1.png`，不受 viewport 寬度影響
+- **WHEN** 呼叫端傳入 `bgSrc="/bg/album/1.jpg"`
+- **THEN** 系統 SHALL 顯示 `/bg/album/1.jpg`，不受 viewport 寬度影響
 
 #### Scenario: 背景圖層完整不透明顯示
 - **WHEN** `GalleryBackground` 渲染（無論是否傳入 `bgSrc`）
