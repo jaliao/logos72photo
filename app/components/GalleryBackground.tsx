@@ -8,9 +8,11 @@
 interface Props {
   /** 指定靜態背景圖路徑；傳入時不套用響應式切換。未傳入則依 viewport 自動切換手機/桌機版 */
   bgSrc?: string
+  /** CSS linear-gradient 字串；傳入時以漸層取代背景圖，優先權高於 bgSrc */
+  gradient?: string
 }
 
-export default function GalleryBackground({ bgSrc }: Props) {
+export default function GalleryBackground({ bgSrc, gradient }: Props) {
   return (
     <>
       <style>{`
@@ -42,15 +44,19 @@ export default function GalleryBackground({ bgSrc }: Props) {
           zIndex: 0,
         }}
       >
-        {/* 背景圖層：bgSrc 傳入時使用靜態圖，否則以 CSS media query 響應式切換 */}
+        {/* 背景圖層：gradient 優先 > bgSrc > 響應式預設 */}
         <div
-          className={bgSrc ? undefined : 'gallery-bg'}
+          className={gradient || bgSrc ? undefined : 'gallery-bg'}
           style={{
             position: 'absolute',
             inset: 0,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            ...(bgSrc ? { backgroundImage: `url(${bgSrc})` } : {}),
+            ...(gradient
+              ? { background: gradient }
+              : bgSrc
+                ? { backgroundImage: `url(${bgSrc})` }
+                : {}),
           }}
         />
 

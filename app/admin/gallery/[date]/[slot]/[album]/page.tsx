@@ -70,7 +70,7 @@ export default async function AlbumPage({ params }: Params) {
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <GalleryBackground bgSrc="/bg/album/1.jpg" />
+      <GalleryBackground gradient="linear-gradient(to bottom, #1a2d3d 0%, #1e3345 45%, #c47a3a 80%, #6b3318 100%)" />
       <div className="relative z-10 mx-auto max-w-2xl">
         <Link
           href={`/admin/gallery/${date}/${slot}`}

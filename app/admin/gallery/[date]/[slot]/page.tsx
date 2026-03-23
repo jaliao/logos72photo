@@ -59,7 +59,7 @@ export default async function SlotPage({ params }: Params) {
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <GalleryBackground bgSrc="/bg/album/1.jpg" />
+      <GalleryBackground gradient="linear-gradient(to bottom, #1a2d3d 0%, #1e3345 45%, #c47a3a 80%, #6b3318 100%)" />
       <div className="relative z-10 mx-auto max-w-lg">
         <Link href="/" className="text-sm text-white/70 hover:text-white" style={{ textShadow: '0 1px 8px rgba(0,0,0,1)' }}>
           ← 返回
