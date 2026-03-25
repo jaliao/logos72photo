@@ -29,9 +29,11 @@ const require = createRequire(import.meta.url)
 
 // ─── 讀取 .env.local ────────────────────────────────────────────────────────
 
-const envPath = join(__dirname, '../.env.local')
+const envPath = existsSync(join(__dirname, '../.env.local'))
+  ? join(__dirname, '../.env.local')
+  : join(__dirname, '../.env')
 if (!existsSync(envPath)) {
-  console.error('找不到 .env.local，請在專案根目錄執行此腳本')
+  console.error('找不到 .env.local 或 .env，請在專案根目錄執行此腳本')
   process.exit(1)
 }
 
@@ -241,6 +243,22 @@ async function coverExists(slotGroup) {
   }
 }
 
+// ─── Firestore：寫入 hasCover flag ───────────────────────────────────────────
+
+async function setHasCoverFlag(slotGroup) {
+  const token = await getAccessToken()
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/slotGroups/${slotGroup}?updateMask.fieldPaths=hasCover`
+  const body = {
+    fields: { hasCover: { booleanValue: true } },
+  }
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`hasCover flag 寫入失敗：${res.status} ${await res.text()}`)
+}
+
 // ─── 圖像合成 ────────────────────────────────────────────────────────────────
 
 const WATERMARK_PATH = join(__dirname, '../functions/assets/watermark2.png')
@@ -287,6 +305,9 @@ async function main() {
         Body: coverBuffer,
         ContentType: 'image/jpeg',
       }))
+
+      // 寫入 Firestore hasCover flag
+      await setHasCoverFlag(slotGroup)
 
       console.log('✓')
       done++

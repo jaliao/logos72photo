@@ -9,6 +9,24 @@
 import { PhotonImage, SamplingFilter, resize } from '@cf-wasm/photon'
 
 /**
+ * 偵測 JPEG 是否為 CMYK 色彩空間。
+ * Photon WASM 不支援 CMYK，強行解碼會造成顏色反轉（負片效果）。
+ * 做法：掃描 SOF 標記（FF C0/C1/C2），取 nComponents 欄位，4 = CMYK/YCCK。
+ */
+export function isCmykJpeg(buffer: Uint8Array): boolean {
+  for (let i = 0; i < buffer.length - 11; i++) {
+    if (buffer[i] !== 0xFF) continue
+    const marker = buffer[i + 1]
+    if (marker === 0xC0 || marker === 0xC1 || marker === 0xC2) {
+      // SOF 結構：[FF][Cx][length(2)][precision(1)][height(2)][width(2)][nComponents(1)]
+      const nComponents = buffer[i + 9]
+      return nComponents === 4
+    }
+  }
+  return false
+}
+
+/**
  * 將圖片縮放至指定寬度（高度等比例）
  * @param buffer  原始圖片二進位資料（JPEG / PNG）
  * @param width   目標寬度（px）

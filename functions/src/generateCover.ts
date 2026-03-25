@@ -116,7 +116,7 @@ async function setCoverFlag(slotGroup: string): Promise<void> {
 
 /**
  * Firestore `photos/{docId}` onCreate 觸發器。
- * 條件：slotGroup 的第一張照片 → 合成封面並上傳 R2。
+ * 條件：device_id === 'iphone2' 且封面尚未存在 → 合成封面並上傳 R2。
  */
 export const generateCover = onDocumentCreated({ document: 'photos/{docId}', region: 'asia-east1', secrets: ['IMAGE_SERVICE_URL'] }, async (event) => {
   const data = event.data?.data()
@@ -124,9 +124,16 @@ export const generateCover = onDocumentCreated({ document: 'photos/{docId}', reg
 
   const slotGroup: string | undefined = data['slot_group']
   const r2Url: string | undefined = data['r2_url']
+  const deviceId: string | undefined = data['device_id']
 
   if (!slotGroup || !r2Url) {
     console.log('generateCover: 缺少 slot_group 或 r2_url，跳過')
+    return
+  }
+
+  // 僅使用 iphone2 的照片產生封面
+  if (deviceId !== 'iphone2') {
+    console.log(`generateCover: device_id=${deviceId}，非 iphone2，跳過`)
     return
   }
 
