@@ -15,7 +15,7 @@
  * 部署：wrangler deploy --config wrangler.image-service.toml
  */
 
-import { resizeToWidth, encodeJpeg, isCmykJpeg } from './lib/photon-helper'
+import { resizeToWidth, encodeJpeg } from './lib/photon-helper'
 
 export interface Env {
   BUCKET: R2Bucket
@@ -90,12 +90,6 @@ export default {
       }
 
       const originalBuffer = new Uint8Array(await originalObject.arrayBuffer())
-
-      // CMYK JPEG 偵測：Photon 不支援 CMYK，會造成顏色反轉，直接 redirect 原圖
-      if (isCmykJpeg(originalBuffer)) {
-        console.warn(`[image-service] CMYK JPEG 偵測，降級至原圖：${r2Key}`)
-        return Response.redirect(fallbackUrl, 302)
-      }
 
       // Photon 影像處理
       const resized = resizeToWidth(originalBuffer, width)
