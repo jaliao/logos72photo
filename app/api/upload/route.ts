@@ -10,7 +10,7 @@ export const runtime = 'edge'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToR2 } from '@/lib/r2'
-import { addDoc, updatePhotoIndex } from '@/lib/firebase-rest'
+import { addDoc, getDoc, updatePhotoIndex } from '@/lib/firebase-rest'
 import { getSlot8h, getSlot15m, getSlotGroup, type PhotoDoc } from '@/lib/types'
 
 const TW_OFFSET_MS = 8 * 60 * 60 * 1000
@@ -41,6 +41,16 @@ export async function POST(req: NextRequest) {
 
     if (!photo || !deviceId) {
       return NextResponse.json({ error: '缺少必要欄位' }, { status: 400 })
+    }
+
+    // 驗證裝置啟用狀態（fail open：讀取失敗時不阻斷上傳）
+    try {
+      const deviceDoc = await getDoc<{ enabled?: boolean }>('devices', deviceId)
+      if (deviceDoc?.enabled === false) {
+        return NextResponse.json({ error: '裝置已停用' }, { status: 403 })
+      }
+    } catch {
+      // fail open：讀取失敗不阻斷上傳
     }
 
     const now = new Date()

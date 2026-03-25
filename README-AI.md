@@ -1,6 +1,6 @@
 # README-AI.md
 
-> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.60
+> AI 工作上下文文件 — 依 `.ai-rules.md` 自動產生，版本 v0.1.61
 
 ---
 
@@ -78,6 +78,7 @@ Image Service Worker (logos72photo-image)
 
 **Firestore `devices/{deviceId}`**
 - `device_id`: string
+- `enabled`: boolean（v0.1.61 新增，false = 裝置停用；文件不存在時視為 true）
 - `battery_level`: number | null（0-1）
 - `last_heartbeat`: number（Unix ms）
 - `last_photo_url`: string | null（R2 原圖 URL）
@@ -141,7 +142,8 @@ Image Service Worker (logos72photo-image)
 
 ## 7. 當前挑戰與任務 (Current Status & Backlog)
 
-- **v0.1.60**（本次）— cr-spec-260323-003：`GalleryBackground` 新增 `gradient` prop；album/admin 頁改以 CSS 漸層（`#1a2d3d → #1e3345 → #c47a3a → #6b3318`）取代背景圖，移除 `bgSrc="/bg/album/1.jpg"` 用法
+- **v0.1.61**（本次）— cr-spec-260325-004：裝置下線控制 + 黑圖防護；新增 `getDoc()` 至 `lib/firebase-rest.ts`；Upload API 上傳前驗證裝置啟用狀態（`devices/{device_id}.enabled`，fail open）；`/admin/devices` 後台裝置管理頁（啟用/停用切換）；camera1/camera2 Server Component 預取 `initialEnabled` prop；`CameraClient` 新增裝置下線畫面（`<DeviceOffline>`）、Stream 暖機保護（1.5s）、黑圖偵測（canvas 中心 64×64 亮度 < 8/255 → 最多重拍 3 次）
+- **v0.1.60** — cr-spec-260323-003：`GalleryBackground` 新增 `gradient` prop；album/admin 頁改以 CSS 漸層（`#1a2d3d → #1e3345 → #c47a3a → #6b3318`）取代背景圖，移除 `bgSrc="/bg/album/1.jpg"` 用法
 - **v0.1.59** — cr-spec-260322-003：`GalleryBackground` 加入 `bgSrc` prop；album 頁改用 `/bg/album/1.jpg`；移除背景圖層 `opacity: 0.1`
 - **v0.1.58** — cr-spec-260322-002：響應式背景圖；`GalleryBackground` 改依 viewport 寬度切換背景（手機 `bg-mb-1.png` / 桌機 `bg-pc-1.png`），使用 CSS `@media (min-width: 640px)`
 - **v0.1.57** — cr-spec-260322-001：更新個人相簿授權說明文字；grid 模式頂部加入三段授權橫幅；expand 模式說明文字從單行改為三段友善版本

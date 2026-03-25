@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 相機客戶端元件（含 NoSleep、本地定時拍照、RTDB 時間同步）
- * 2026-02-21 (Updated: 2026-03-05)
+ * 2026-02-21 (Updated: 2026-03-25)
  * app/camera/CameraClient.tsx
  * ----------------------------------------------
  */
@@ -12,6 +12,14 @@
 const COUNTDOWN_SECONDS = 10
 // 比整 5 分鐘提早觸發的偏移量（cron: 4-59/5 * * * *，提前 60 秒）
 const TRIGGER_OFFSET_MS = 60_000
+// Stream 暖機等待時間（getUserMedia resolve 後至少等待此毫秒數才拍照）
+const WARMUP_MS = 1500
+// 黑圖偵測：平均亮度低於此值視為黑圖（0–255）
+const BLACK_THRESHOLD = 8
+// 黑圖最大重拍次數
+const MAX_RETRIES = 3
+// 每次重拍前等待毫秒數
+const RETRY_DELAY_MS = 500
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { ref, onValue } from 'firebase/database'
@@ -33,6 +41,25 @@ function formatTime12(date: Date): string {
 function formatTime(ts: number | null): string {
   if (!ts) return '—'
   return formatTime12(new Date(ts))
+}
+
+// 取 canvas 中心 64×64 px 區域的平均亮度（0–255）
+function sampleLuminance(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): number {
+  const size = 64
+  const cx = Math.floor(canvas.width / 2)
+  const cy = Math.floor(canvas.height / 2)
+  const x = Math.max(0, cx - size / 2)
+  const y = Math.max(0, cy - size / 2)
+  const w = Math.min(size, canvas.width - x)
+  const h = Math.min(size, canvas.height - y)
+  if (w <= 0 || h <= 0) return 255 // 無法取樣 → 視為非黑圖
+  const data = ctx.getImageData(x, y, w, h).data
+  let sum = 0
+  const count = w * h
+  for (let i = 0; i < data.length; i += 4) {
+    sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+  }
+  return sum / count
 }
 
 // PWA standalone 模式偵測（非 standalone → 顯示安裝引導，防止重複加入）
@@ -59,15 +86,34 @@ function InstallGuide({ deviceId, appTitle }: { deviceId: string; appTitle: stri
   )
 }
 
+// 裝置已停用畫面
+function DeviceOffline({ deviceId }: { deviceId: string }) {
+  return (
+    <main className="flex h-screen w-screen flex-col items-center justify-center bg-black text-white px-8 text-center">
+      <div className="mb-6 text-5xl">⚠️</div>
+      <h1 className="mb-2 text-xl font-bold">裝置已下線</h1>
+      <p className="mb-1 text-sm text-zinc-400">裝置：{deviceId}</p>
+      <p className="text-sm text-zinc-500">請聯繫管理員重新啟用此裝置</p>
+    </main>
+  )
+}
+
 interface CameraClientProps {
   deviceId: string
   appTitle?: string
+  initialEnabled?: boolean
 }
 
-export default function CameraClient({ deviceId, appTitle = '接力相機' }: CameraClientProps) {
+export default function CameraClient({
+  deviceId,
+  appTitle = '接力相機',
+  initialEnabled = true,
+}: CameraClientProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const nosleepRef = useRef<{ enable(): void; disable(): void } | null>(null)
+  // Stream 啟動時間戳（0 = 尚未就緒）
+  const streamReadyAt = useRef<number>(0)
 
   // 1.1 status union 加入 'countdown'
   const [status, setStatus] = useState<'idle' | 'countdown' | 'shooting' | 'uploading' | 'error'>('idle')
@@ -108,13 +154,35 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     // 3.3 guard：shooting / uploading 期間不重複拍照；countdown 結束後可正常執行
     if (!video || !canvas || status === 'shooting' || status === 'uploading') return
 
+    // 暖機保護：stream 尚未就緒則跳過
+    if (streamReadyAt.current === 0) return
     setStatus('shooting')
+
+    // 等待 stream 暖機完成（getUserMedia resolve 後至少 WARMUP_MS）
+    const elapsed = Date.now() - streamReadyAt.current
+    if (elapsed < WARMUP_MS) {
+      await new Promise<void>((resolve) => setTimeout(resolve, WARMUP_MS - elapsed))
+    }
 
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.drawImage(video, 0, 0)
+
+    // 黑圖偵測：若亮度低於閾值，最多重拍 MAX_RETRIES 次
+    let luminance = sampleLuminance(canvas, ctx)
+    for (let attempt = 0; attempt < MAX_RETRIES && luminance < BLACK_THRESHOLD; attempt++) {
+      await new Promise<void>((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+      ctx.drawImage(video, 0, 0)
+      luminance = sampleLuminance(canvas, ctx)
+    }
+
+    if (luminance < BLACK_THRESHOLD) {
+      await logError(deviceId, 'camera:black-frame', '連續 4 次偵測到黑圖，跳過本次觸發')
+      setStatus('idle')
+      return
+    }
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
@@ -192,7 +260,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
 
   // 2.1 啟動相機串流（依賴 facingMode，切換鏡頭時重新取得串流）
   useEffect(() => {
-    if (!isStandalone) return
+    if (!isStandalone || !initialEnabled) return
     let stream: MediaStream | null = null
 
     // iPhone 偵測：使用最大解析度串流
@@ -205,6 +273,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       .getUserMedia({ video: videoConstraints, audio: false })
       .then((s) => {
         stream = s
+        streamReadyAt.current = Date.now() // 記錄 stream 就緒時間
         if (videoRef.current) {
           videoRef.current.srcObject = s
         }
@@ -214,17 +283,18 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     return () => {
       // 停止舊串流所有 track
       stream?.getTracks().forEach((t) => t.stop())
+      streamReadyAt.current = 0 // 重置暖機計時
       // 3.4 清除倒數計時器，防止 memory leak
       if (countdownRef.current) {
         clearInterval(countdownRef.current)
         countdownRef.current = null
       }
     }
-  }, [isStandalone, facingMode])
+  }, [isStandalone, initialEnabled, facingMode])
 
   // NoSleep.js 啟動（防止 iPhone 休眠）
   useEffect(() => {
-    if (!isStandalone) return
+    if (!isStandalone || !initialEnabled) return
     import('nosleep.js').then(({ default: NoSleep }) => {
       nosleepRef.current = new NoSleep()
       const enable = () => {
@@ -236,7 +306,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     return () => {
       nosleepRef.current?.disable()
     }
-  }, [isStandalone])
+  }, [isStandalone, initialEnabled])
 
   // 本地定時拍照：計算距下一個整 5 分鐘的延遲並排程
   // 每次拍照結束後（status 回到 idle）重新呼叫此函式
@@ -259,30 +329,30 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
 
   // 頁面載入後立即排程第一次拍照
   useEffect(() => {
-    if (!isStandalone) return
+    if (!isStandalone || !initialEnabled) return
     scheduleNextShot()
     return () => {
       if (shotTimerRef.current) clearTimeout(shotTimerRef.current)
     }
-  }, [isStandalone, scheduleNextShot])
+  }, [isStandalone, initialEnabled, scheduleNextShot])
 
   // status 回到 idle 後重新排程（拍照完成 → 安排下一次）
   useEffect(() => {
-    if (isStandalone && status === 'idle') {
+    if (isStandalone && initialEnabled && status === 'idle') {
       scheduleNextShot()
     }
-  }, [isStandalone, status, scheduleNextShot])
+  }, [isStandalone, initialEnabled, status, scheduleNextShot])
 
   // error 自動恢復：3 秒後重設為 idle，確保排程不中斷
   useEffect(() => {
-    if (!isStandalone || status !== 'error') return
+    if (!isStandalone || !initialEnabled || status !== 'error') return
     const id = setTimeout(() => setStatus('idle'), 3000)
     return () => clearTimeout(id)
-  }, [isStandalone, status])
+  }, [isStandalone, initialEnabled, status])
 
   // Firebase RTDB 監聽 sync/server_time（時間同步，不觸發拍照）
   useEffect(() => {
-    if (!isStandalone) return
+    if (!isStandalone || !initialEnabled) return
     const syncRef = ref(getRtdb(), 'sync/server_time')
     const unsubscribe = onValue(syncRef, (snapshot) => {
       const val: number | null = snapshot.val()
@@ -292,11 +362,11 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
       setLastRtdbSyncAt(Date.now())
     })
     return () => unsubscribe()
-  }, [isStandalone])
+  }, [isStandalone, initialEnabled])
 
   // 7.1 心跳：每 HEARTBEAT_INTERVAL_MS 透過 API 寫入 Firestore（Admin SDK，繞過 rules）
   useEffect(() => {
-    if (!isStandalone) return
+    if (!isStandalone || !initialEnabled) return
     const sendHeartbeat = async () => {
       const now = Date.now()
       setLastHeartbeat(now)
@@ -314,7 +384,7 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
     sendHeartbeat()
     const id = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
     return () => clearInterval(id)
-  }, [deviceId, isStandalone])
+  }, [deviceId, isStandalone, initialEnabled])
 
   // 5.2 當前時間：每秒更新，顯示於狀態列（12 時制）
   useEffect(() => {
@@ -333,11 +403,17 @@ export default function CameraClient({ deviceId, appTitle = '接力相機' }: Ca
   // SSR 或偵測中：空白畫面
   if (isStandalone === null) return null
 
+  // 裝置已停用
+  if (!initialEnabled) return <DeviceOffline deviceId={deviceId} />
+
   // 非 standalone（瀏覽器直接開啟）→ 顯示安裝引導
   if (!isStandalone) return <InstallGuide deviceId={deviceId} appTitle={appTitle} />
 
   // 5.1 心跳在線判斷：距上次心跳 ≤ 30 秒為在線
   const isOnline = lastHeartbeat !== null && Date.now() - lastHeartbeat <= 30_000
+
+  // 抑制 timeDiffMs 未使用警告（保留供未來顯示）
+  void timeDiffMs
 
   return (
     <main className="relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden bg-black text-white">

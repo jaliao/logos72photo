@@ -228,6 +228,32 @@ export async function setDoc(
 }
 
 /**
+ * Firestore REST：讀取單一文件
+ * @param collection 集合路徑，例如 "devices"
+ * @param docId      文件 ID，例如 "iphone-1"
+ * @returns 文件欄位物件，或 null（文件不存在）
+ */
+export async function getDoc<T = Record<string, unknown>>(
+  collection: string,
+  docId: string,
+): Promise<T | null> {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const token = await getAccessToken()
+
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collection}/${docId}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`Firestore getDoc 失敗：${res.status} ${await res.text()}`)
+
+  const data = (await res.json()) as { fields?: Record<string, unknown> }
+  if (!data.fields) return null
+  return parseFirestoreFields(data.fields) as T
+}
+
+/**
  * Firestore REST：讀取集合所有文件
  * @param collectionPath 集合路徑，例如 "devices"
  * @returns 文件資料陣列（已解析為 JS 物件）

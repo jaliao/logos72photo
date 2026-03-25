@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { label: '資料清除', href: '/admin/data-cleanup' },
   { label: '封面索引', href: '/admin/rebuild-first-photos' },
   { label: '錯誤日誌', href: '/admin/errors' },
+  { label: '裝置管理', href: '/admin/devices' },
 ]
 
 function NavItems({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
