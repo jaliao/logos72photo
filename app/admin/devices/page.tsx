@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 import { getDoc } from '@/lib/firebase-rest'
 import DeviceToggle from './DeviceToggle'
 
-const KNOWN_DEVICES = ['iphone-1', 'iphone-2']
+const KNOWN_DEVICES = ['iphone-1', 'iphone-2', 'iphone-3']
 
 async function fetchDeviceStatus(device_id: string): Promise<boolean> {
   try {

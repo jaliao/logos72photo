@@ -11,7 +11,7 @@ export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { setDoc } from '@/lib/firebase-rest'
 
-const KNOWN_DEVICES = ['iphone-1', 'iphone-2']
+const KNOWN_DEVICES = ['iphone-1', 'iphone-2', 'iphone-3']
 
 export async function PATCH(
   req: NextRequest,

@@ -11,7 +11,7 @@ export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { getDoc } from '@/lib/firebase-rest'
 
-const KNOWN_DEVICES = ['iphone-1', 'iphone-2']
+const KNOWN_DEVICES = ['iphone-1', 'iphone-2', 'iphone-3']
 
 export async function GET(req: NextRequest) {
   const session = req.cookies.get('admin_session')?.value
