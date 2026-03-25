@@ -131,9 +131,9 @@ export const generateCover = onDocumentCreated({ document: 'photos/{docId}', reg
     return
   }
 
-  // 僅使用 iphone2 的照片產生封面
-  if (deviceId !== 'iphone2') {
-    console.log(`generateCover: device_id=${deviceId}，非 iphone2，跳過`)
+  // 僅使用 iphone-2 的照片產生封面
+  if (deviceId !== 'iphone-2') {
+    console.log(`generateCover: device_id=${deviceId}，非 iphone-2，跳過`)
     return
   }
 

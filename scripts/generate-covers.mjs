@@ -178,7 +178,7 @@ async function getAccessToken() {
 async function queryFirstPhotoPerSlotGroup() {
   const token = await getAccessToken()
 
-  // 取得 photos 集合所有文件（只需 slot_group 與 r2_url 與 timestamp）
+  // 取得 photos 集合所有文件（只需 slot_group、r2_url、timestamp、device_id）
   const body = {
     structuredQuery: {
       from: [{ collectionId: 'photos' }],
@@ -187,6 +187,7 @@ async function queryFirstPhotoPerSlotGroup() {
           { fieldPath: 'slot_group' },
           { fieldPath: 'r2_url' },
           { fieldPath: 'timestamp' },
+          { fieldPath: 'device_id' },
         ],
       },
       orderBy: [{ field: { fieldPath: 'timestamp' }, direction: 'ASCENDING' }],
@@ -216,8 +217,12 @@ async function queryFirstPhotoPerSlotGroup() {
     const slotGroup = f.slot_group?.stringValue
     const r2Url    = f.r2_url?.stringValue
     const timestamp = Number(f.timestamp?.integerValue ?? f.timestamp?.doubleValue ?? 0)
+    const deviceId  = f.device_id?.stringValue
 
     if (!slotGroup || !r2Url) continue
+
+    // 僅使用 iphone-2 的照片產生封面
+    if (deviceId !== 'iphone-2') continue
 
     // 日期範圍過濾（slotGroup = MMDDHHSS，前 4 碼為 MMDD）
     const mmdd = slotGroup.slice(0, 4)
@@ -247,7 +252,7 @@ async function coverExists(slotGroup) {
 
 async function setHasCoverFlag(slotGroup) {
   const token = await getAccessToken()
-  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/slotGroups/${slotGroup}?updateMask.fieldPaths=hasCover`
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/slotGroups/${slotGroup}`
   const body = {
     fields: { hasCover: { booleanValue: true } },
   }
