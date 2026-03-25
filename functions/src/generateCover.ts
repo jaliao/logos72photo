@@ -49,17 +49,6 @@ async function coverExists(r2: S3Client, slotGroup: string): Promise<boolean> {
   }
 }
 
-/** 查詢 Firestore 中該 slotGroup 的照片數量 */
-async function getPhotoCount(slotGroup: string): Promise<number> {
-  const db = admin.firestore()
-  const snap = await db
-    .collection('photos')
-    .where('slot_group', '==', slotGroup)
-    .count()
-    .get()
-  return snap.data().count
-}
-
 /** 從 URL 下載圖片 buffer */
 async function fetchImageBuffer(url: string): Promise<Buffer> {
   const res = await fetch(url)
@@ -144,15 +133,10 @@ export const generateCover = onDocumentCreated({ document: 'photos/{docId}', reg
   const r2 = createR2Client()
 
   // 冪等保護：封面已存在則跳過
+  // 注意：不使用 photo count 判斷，避免多裝置同時上傳造成 race condition
+  //（兩個 trigger 同時執行時 count 已 ≥ 2，導致封面永遠跳過）
   if (await coverExists(r2, slotGroup)) {
     console.log(`generateCover: covers/${slotGroup}.jpg 已存在，跳過`)
-    return
-  }
-
-  // 判斷是否為第一張：count > 1 則非第一張
-  const count = await getPhotoCount(slotGroup)
-  if (count > 1) {
-    console.log(`generateCover: slotGroup ${slotGroup} 已有 ${count} 張照片，非第一張，跳過`)
     return
   }
 
