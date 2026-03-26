@@ -196,7 +196,7 @@ export default function PhotoSlideshow({ photos }: Props) {
 
           {/* 左側：上一張按鈕 */}
           <button
-            className="absolute left-0 top-0 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
+            className="absolute left-0 top-14 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
             onClick={(e) => { e.stopPropagation(); prev() }}
             disabled={openIndex === 0}
             aria-label="上一張"
@@ -210,7 +210,7 @@ export default function PhotoSlideshow({ photos }: Props) {
 
           {/* 右側：下一張按鈕 */}
           <button
-            className="absolute right-0 top-0 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
+            className="absolute right-0 top-14 bottom-0 z-20 flex items-center px-1 text-white/70 hover:text-white active:scale-95 transition disabled:opacity-20 disabled:pointer-events-none"
             onClick={(e) => { e.stopPropagation(); next() }}
             disabled={openIndex === photos.length - 1}
             aria-label="下一張"
