@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 照片幻燈片（Google Photos 風格全螢幕瀏覽）
- * 2026-03-12
+ * 2026-03-12 (Updated: 2026-03-26)
  * app/components/PhotoSlideshow.tsx
  * ----------------------------------------------
  */
@@ -29,22 +29,9 @@ export default function PhotoSlideshow({ photos }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [direction, setDirection] = useState<'left' | 'right' | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [showToast, setShowToast] = useState(false)
 
   const isOpen = openIndex !== null
   const current = isOpen ? photos[openIndex] : null
-
-  // 7.1 & 7.2：mount 時讀取 ?photo= query param 自動開啟幻燈片
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const photoParam = params.get('photo')
-    if (photoParam !== null) {
-      const idx = parseInt(photoParam, 10)
-      if (!isNaN(idx) && idx >= 0 && idx < photos.length) {
-        setOpenIndex(idx)
-      }
-    }
-  }, [photos.length])
 
   // 2.3：開啟時鎖定背景捲動
   useEffect(() => {
@@ -94,49 +81,25 @@ export default function PhotoSlideshow({ photos }: Props) {
   // 4.2：Swipe 手勢
   const swipeHandlers = useSwipe(next, prev)
 
-  // 5.1–5.4：下載原圖
+  // 下載原圖（所有平台統一使用 blob fetch + <a download>）
   const handleDownload = useCallback(async () => {
     if (!current || isDownloading) return
     setIsDownloading(true)
     try {
-      // 5.2：iOS Web Share API — 使用 1280 縮圖分享
-      const iosCapable = navigator.canShare?.({ files: [new File([], current.filename)] })
-      const fetchUrl = iosCapable ? current.slideUrl : current.r2Url
-      const res = await fetch(fetchUrl)
+      const res = await fetch(current.r2Url)
       const blob = await res.blob()
-      const file = new File([blob], current.filename, { type: blob.type || 'image/jpeg' })
-
-      if (iosCapable) {
-        await navigator.share({ files: [file], title: current.filename })
-      } else {
-        // 5.3：其他平台 — <a download>（原圖）
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = current.filename
-        a.click()
-        URL.revokeObjectURL(url)
-      }
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = current.filename
+      a.click()
+      URL.revokeObjectURL(url)
     } catch {
-      // 使用者取消分享或下載失敗，靜默處理
+      // 下載失敗，靜默處理
     } finally {
       setIsDownloading(false)
     }
   }, [current, isDownloading])
-
-  // 6.1 & 6.2：分享連結至剪貼簿
-  const handleShare = useCallback(async () => {
-    if (openIndex === null) return
-    const base = window.location.href.split('?')[0]
-    const url = `${base}?photo=${openIndex}`
-    try {
-      await navigator.clipboard.writeText(url)
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 2000)
-    } catch {
-      // 剪貼簿寫入失敗，靜默處理
-    }
-  }, [openIndex])
 
   return (
     <>
@@ -207,21 +170,8 @@ export default function PhotoSlideshow({ photos }: Props) {
               ← 返回
             </button>
 
-            {/* 右上角：分享 + 下載按鈕 */}
+            {/* 右上角：下載按鈕 */}
             <div className="flex items-center gap-1">
-              {/* 分享按鈕 */}
-              <button
-                className="rounded-lg p-2 text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition"
-                onClick={handleShare}
-                aria-label="複製分享連結"
-                title="複製分享連結"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
-              </button>
-
               {/* 下載按鈕 */}
               <button
                 className="rounded-lg p-2 text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition disabled:opacity-40"
@@ -272,12 +222,7 @@ export default function PhotoSlideshow({ photos }: Props) {
             </span>
           </button>
 
-          {/* 6.3：「已複製！」Toast */}
-          {showToast && (
-            <div className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/20 px-4 py-2 text-sm text-white backdrop-blur-sm">
-              已複製！
-            </div>
-          )}
+
         </div>
       )}
     </>
