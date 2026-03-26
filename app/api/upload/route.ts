@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * API Route：照片上傳至 Cloudflare R2
- * 2026-02-21 (Updated: 2026-02-21)
+ * 2026-02-21 (Updated: 2026-03-26)
  * app/api/upload/route.ts
  * ----------------------------------------------
  */
@@ -15,13 +15,14 @@ import { getSlot8h, getSlot15m, getSlotGroup, type PhotoDoc } from '@/lib/types'
 
 const TW_OFFSET_MS = 8 * 60 * 60 * 1000
 const TTL_MS = 7 * 24 * 60 * 60 * 1000
+const MIN_PHOTO_BYTES = 300_000
 
-async function writeErrorLog(deviceId: string, message: string): Promise<void> {
+async function writeErrorLog(deviceId: string, source: string, message: string): Promise<void> {
   try {
     const now = Date.now()
     await addDoc('error_logs', {
       device_id: deviceId,
-      source: 'api:upload',
+      source,
       message,
       timestamp: now,
       date: new Date(now + TW_OFFSET_MS).toISOString().slice(0, 10),
@@ -66,6 +67,13 @@ export async function POST(req: NextRequest) {
     // 上傳至 R2（使用 Uint8Array，相容 Edge Runtime）
     const arrayBuffer = await photo.arrayBuffer()
     const body = new Uint8Array(arrayBuffer)
+
+    // 壞圖守衛：過小的照片（黑圖、損壞）直接拋棄
+    if (body.byteLength < MIN_PHOTO_BYTES) {
+      await writeErrorLog(deviceId, 'upload-size-guard', `照片過小，byteLength: ${body.byteLength}`)
+      return NextResponse.json({ error: '照片檔案過小，已拒絕' }, { status: 400 })
+    }
+
     const r2Url = await uploadToR2(key, body)
 
     // 寫入 Firestore photos 集合（透過 REST API）
@@ -95,7 +103,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('上傳失敗：', message)
-    await writeErrorLog(deviceId, message)
+    await writeErrorLog(deviceId, 'api:upload', message)
     return NextResponse.json({ error: '伺服器錯誤' }, { status: 500 })
   }
 }
