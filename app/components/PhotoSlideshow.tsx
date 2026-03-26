@@ -175,7 +175,7 @@ export default function PhotoSlideshow({ photos }: Props) {
               {/* 下載按鈕 */}
               <button
                 className="rounded-lg p-2 text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition disabled:opacity-40"
-                onClick={handleDownload}
+                onClick={(e) => { e.stopPropagation(); handleDownload() }}
                 disabled={isDownloading}
                 aria-label={isDownloading ? '下載中…' : '下載照片'}
                 title={isDownloading ? '下載中…' : `下載 ${current.filename}`}
